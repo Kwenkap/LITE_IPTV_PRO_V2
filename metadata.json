@@ -1,0 +1,6 @@
+{
+  "name": "POWER IPTV",
+  "description": "Portail de streaming haute fidélité POWER IPTV avec abonnements intelligents et serveurs stables.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
