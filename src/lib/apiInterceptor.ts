@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import bcrypt from "bcryptjs";
 import firebaseConfig from "../../firebase-applet-config.json";
+import { DEFAULT_DIGITAL_PRODUCTS } from "../data/defaultProducts";
 
 class ClientLocalDB {
   static get(collectionName: string): any[] {
@@ -253,6 +254,12 @@ async function seedInitialDataClient() {
       ClientLocalDB.set("iptv_users", DEFAULT_INITIAL_IPTV_USERS);
       console.log("Seeded default IPTV users in localStorage.");
     }
+
+    const localProducts = ClientLocalDB.get("store_products");
+    if (!localProducts || localProducts.length === 0) {
+      ClientLocalDB.set("store_products", DEFAULT_DIGITAL_PRODUCTS);
+      console.log("Seeded default digital products in localStorage.");
+    }
   } catch (err) {
     console.warn("Client localStorage seeding failed:", err);
   }
@@ -272,6 +279,14 @@ async function seedInitialDataClient() {
       console.log("Firestore iptv_users collection empty. Seeding initial IPTV users...");
       for (const user of DEFAULT_INITIAL_IPTV_USERS) {
         await setDoc(doc(db, "iptv_users", user.username), user);
+      }
+    }
+
+    const prodsSnap = await getDocs(collection(db, "store_products"));
+    if (prodsSnap.empty) {
+      console.log("Firestore store_products collection empty. Seeding initial products...");
+      for (const prod of DEFAULT_DIGITAL_PRODUCTS) {
+        await setDoc(doc(db, "store_products", prod.id), prod);
       }
     }
   } catch (err) {
@@ -1154,6 +1169,204 @@ export async function initApiInterceptor() {
         } else {
           return jsonResponse({ error: "Mot de passe admin invalide" }, 401);
         }
+      }
+
+      // --- ENDPOINT: GET /api/store/products ---
+      if (cleanPath === "/api/store/products" && reqMethod === "GET") {
+        let products: any[] = [];
+        let fetchedFromFirestore = false;
+
+        if (db) {
+          try {
+            const prodsSnap = await getDocs(collection(db, "store_products"));
+            prodsSnap.forEach((docSnap) => {
+              products.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            if (products.length > 0) fetchedFromFirestore = true;
+          } catch (e) {
+            console.warn("Firestore fetch store products failed:", e);
+          }
+        }
+
+        if (!fetchedFromFirestore) {
+          products = ClientLocalDB.get("store_products");
+          if (!products || products.length === 0) {
+            products = DEFAULT_DIGITAL_PRODUCTS;
+            ClientLocalDB.set("store_products", DEFAULT_DIGITAL_PRODUCTS);
+          }
+        }
+
+        return jsonResponse(products);
+      }
+
+      // --- ENDPOINT: POST /api/admin/store/createProduct ---
+      if (cleanPath === "/api/admin/store/createProduct" && reqMethod === "POST") {
+        const { title, category, price, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = body;
+        if (!title || !category || price === undefined) {
+          return jsonResponse({ error: "Titre, catégorie et prix requis" }, 400);
+        }
+
+        const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
+        const newProduct = {
+          id,
+          title,
+          category,
+          price: Number(price),
+          originalPrice: originalPrice ? Number(originalPrice) : undefined,
+          description: description || "",
+          stockStatus: stockStatus || "in_stock",
+          badge: badge || "",
+          durationOrType: durationOrType || "Abonnement",
+          iconName: iconName || "Sparkles",
+          features: features || [],
+          createdAt: Date.now()
+        };
+
+        const localProds = ClientLocalDB.get("store_products");
+        localProds.push(newProduct);
+        ClientLocalDB.set("store_products", localProds);
+
+        if (db) {
+          try {
+            await setDoc(doc(db, "store_products", id), newProduct);
+          } catch (e) {
+            console.warn("Firestore save product failed:", e);
+          }
+        }
+
+        return jsonResponse({ success: true, message: "Produit créé avec succès", product: newProduct });
+      }
+
+      // --- ENDPOINT: POST /api/admin/store/editProduct ---
+      if (cleanPath === "/api/admin/store/editProduct" && reqMethod === "POST") {
+        const { id, title, category, price, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = body;
+        if (!id) {
+          return jsonResponse({ error: "ID du produit requis" }, 400);
+        }
+
+        const localProds = ClientLocalDB.get("store_products");
+        const idx = localProds.findIndex(p => p.id === id);
+        if (idx !== -1) {
+          localProds[idx] = { ...localProds[idx], ...body };
+          ClientLocalDB.set("store_products", localProds);
+        }
+
+        if (db) {
+          try {
+            await updateDoc(doc(db, "store_products", id), body);
+          } catch (e) {
+            console.warn("Firestore edit product failed:", e);
+          }
+        }
+
+        return jsonResponse({ success: true, message: "Produit mis à jour" });
+      }
+
+      // --- ENDPOINT: POST /api/admin/store/deleteProduct ---
+      if (cleanPath === "/api/admin/store/deleteProduct" && reqMethod === "POST") {
+        const { id } = body;
+        if (!id) {
+          return jsonResponse({ error: "ID du produit requis" }, 400);
+        }
+
+        const localProds = ClientLocalDB.get("store_products").filter(p => p.id !== id);
+        ClientLocalDB.set("store_products", localProds);
+
+        if (db) {
+          try {
+            await deleteDoc(doc(db, "store_products", id));
+          } catch (e) {
+            console.warn("Firestore delete product failed:", e);
+          }
+        }
+
+        return jsonResponse({ success: true, message: "Produit supprimé" });
+      }
+
+      // --- ENDPOINT: GET /api/store/orders ---
+      if (cleanPath === "/api/store/orders" && reqMethod === "GET") {
+        let orders: any[] = [];
+        let fetchedFromFirestore = false;
+
+        if (db) {
+          try {
+            const ordersSnap = await getDocs(collection(db, "store_orders"));
+            ordersSnap.forEach((docSnap) => {
+              orders.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            orders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            fetchedFromFirestore = true;
+          } catch (e) {
+            console.warn("Firestore fetch orders failed:", e);
+          }
+        }
+
+        if (!fetchedFromFirestore) {
+          orders = ClientLocalDB.get("store_orders");
+          orders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        }
+
+        return jsonResponse(orders);
+      }
+
+      // --- ENDPOINT: POST /api/store/checkout ---
+      if (cleanPath === "/api/store/checkout" && reqMethod === "POST") {
+        const { customerName, customerEmail, customerPhone, paymentMethod, items, totalAmount } = body;
+        if (!customerName || !customerEmail || !customerPhone || !items || items.length === 0) {
+          return jsonResponse({ error: "Informations de commande incomplètes" }, 400);
+        }
+
+        const id = "ORD-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+        const newOrder = {
+          id,
+          customerName,
+          customerEmail,
+          customerPhone,
+          paymentMethod: paymentMethod || "card",
+          items,
+          totalAmount: Number(totalAmount || 0),
+          status: "pending",
+          createdAt: Date.now()
+        };
+
+        const localOrders = ClientLocalDB.get("store_orders");
+        localOrders.unshift(newOrder);
+        ClientLocalDB.set("store_orders", localOrders);
+
+        if (db) {
+          try {
+            await setDoc(doc(db, "store_orders", id), newOrder);
+          } catch (e) {
+            console.warn("Firestore save order failed:", e);
+          }
+        }
+
+        return jsonResponse({ success: true, message: "Commande validée", order: newOrder });
+      }
+
+      // --- ENDPOINT: POST /api/admin/store/updateOrderStatus ---
+      if (cleanPath === "/api/admin/store/updateOrderStatus" && reqMethod === "POST") {
+        const { id, status } = body;
+        if (!id || !status) {
+          return jsonResponse({ error: "ID et statut requis" }, 400);
+        }
+
+        const localOrders = ClientLocalDB.get("store_orders");
+        const idx = localOrders.findIndex(o => o.id === id);
+        if (idx !== -1) {
+          localOrders[idx].status = status;
+          ClientLocalDB.set("store_orders", localOrders);
+        }
+
+        if (db) {
+          try {
+            await updateDoc(doc(db, "store_orders", id), { status });
+          } catch (e) {
+            console.warn("Firestore update order status failed:", e);
+          }
+        }
+
+        return jsonResponse({ success: true, message: "Statut de la commande mis à jour" });
       }
 
       // Fallback for unhandled API endpoints

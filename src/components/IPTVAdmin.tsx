@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   Shield, Lock, Users, UserPlus, Trash2, Copy, CheckCircle, 
   Search, LogOut, Key, Calendar, Tv, Clock, Eye, EyeOff, Plus, AlertTriangle, ChevronRight, Sparkles, RefreshCw, User,
-  MessageSquare, Check, Inbox, Mail, FileText, Pencil
+  MessageSquare, Check, Inbox, Mail, FileText, Pencil, ShoppingBag, Package, Tag, DollarSign, ShoppingBasket, PhoneCall, Filter
 } from "lucide-react";
+import { DigitalProduct, DigitalOrder, ProductCategory, StockStatus } from "../types/store";
 
 interface IPTVUser {
   id: string;
@@ -38,7 +39,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"users" | "admins" | "tickets" | "logs">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "admins" | "tickets" | "logs" | "store_products" | "store_orders">("users");
 
   // IPTV Users States
   const [users, setUsers] = useState<IPTVUser[]>([]);
@@ -59,6 +60,35 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [searchLogQuery, setSearchLogQuery] = useState("");
+
+  // Digital Store Products States
+  const [storeProducts, setStoreProducts] = useState<DigitalProduct[]>([]);
+  const [loadingStoreProducts, setLoadingStoreProducts] = useState(false);
+  const [searchProdQuery, setSearchProdQuery] = useState("");
+  const [filterProdCategory, setFilterProdCategory] = useState<string>("all");
+
+  // Digital Store Creation Form States
+  const [prodTitle, setProdTitle] = useState("");
+  const [prodCategory, setProdCategory] = useState<ProductCategory>("VOD / Streaming");
+  const [prodPrice, setProdPrice] = useState("");
+  const [prodOriginalPrice, setProdOriginalPrice] = useState("");
+  const [prodDesc, setProdDesc] = useState("");
+  const [prodStock, setProdStock] = useState<StockStatus>("in_stock");
+  const [prodBadge, setProdBadge] = useState("");
+  const [prodDuration, setProdDuration] = useState("1 Mois / Profil HD");
+  const [prodIcon, setProdIcon] = useState("Sparkles");
+  const [prodFeatures, setProdFeatures] = useState("Ultra HD / 4K, 1 Écran simultané, Garantie Totale");
+  const [prodFormError, setProdFormError] = useState("");
+  const [prodFormSuccess, setProdFormSuccess] = useState("");
+
+  // Editing Product State
+  const [editingProd, setEditingProd] = useState<DigitalProduct | null>(null);
+
+  // Digital Store Orders States
+  const [storeOrders, setStoreOrders] = useState<DigitalOrder[]>([]);
+  const [loadingStoreOrders, setLoadingStoreOrders] = useState(false);
+  const [searchOrderQuery, setSearchOrderQuery] = useState("");
+  const [filterOrderStatus, setFilterOrderStatus] = useState<string>("all");
 
   // IPTV Creation Form States
   const [newUsername, setNewUsername] = useState("");
@@ -102,8 +132,174 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
       fetchAdmins(adminToken);
       fetchTickets(adminToken);
       fetchLogs(adminToken);
+      fetchStoreProducts();
+      fetchStoreOrders(adminToken);
     }
   }, []);
+
+  // Fetch Store Products
+  const fetchStoreProducts = async () => {
+    setLoadingStoreProducts(true);
+    try {
+      const response = await fetch("/api/store/products");
+      if (response.ok) {
+        const data = await response.json();
+        setStoreProducts(data);
+      }
+    } catch (err) {
+      console.error("Erreur chargement des produits :", err);
+    } finally {
+      setLoadingStoreProducts(false);
+    }
+  };
+
+  // Fetch Store Orders
+  const fetchStoreOrders = async (token = adminToken) => {
+    if (!token) return;
+    setLoadingStoreOrders(true);
+    try {
+      const response = await fetch("/api/store/orders", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStoreOrders(data);
+      }
+    } catch (err) {
+      console.error("Erreur chargement des commandes :", err);
+    } finally {
+      setLoadingStoreOrders(false);
+    }
+  };
+
+  // Create Product Handler
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProdFormError("");
+    setProdFormSuccess("");
+
+    if (!prodTitle.trim() || !prodPrice.trim()) {
+      setProdFormError("Titre et prix requis.");
+      return;
+    }
+
+    try {
+      const featureList = prodFeatures.split(",").map(f => f.trim()).filter(Boolean);
+      const response = await fetch("/api/admin/store/createProduct", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          title: prodTitle.trim(),
+          category: prodCategory,
+          price: parseFloat(prodPrice),
+          originalPrice: prodOriginalPrice ? parseFloat(prodOriginalPrice) : undefined,
+          description: prodDesc,
+          stockStatus: prodStock,
+          badge: prodBadge,
+          durationOrType: prodDuration,
+          iconName: prodIcon,
+          features: featureList
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur de création du produit.");
+      }
+
+      setProdFormSuccess("Produit ajouté avec succès à la boutique !");
+      setProdTitle("");
+      setProdPrice("");
+      setProdOriginalPrice("");
+      setProdDesc("");
+      setProdBadge("");
+      fetchStoreProducts();
+    } catch (err: any) {
+      setProdFormError(err.message || "Erreur lors de la création.");
+    }
+  };
+
+  // Edit Product Handler
+  const handleSaveEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProd) return;
+
+    try {
+      const response = await fetch("/api/admin/store/editProduct", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify(editingProd),
+      });
+
+      if (response.ok) {
+        setEditingProd(null);
+        fetchStoreProducts();
+      } else {
+        const data = await response.json();
+        alert(data.error || "Erreur lors de la modification.");
+      }
+    } catch (err) {
+      console.error("Erreur modification produit :", err);
+    }
+  };
+
+  // Delete Product Handler
+  const handleDeleteProduct = async (id: string, title: string) => {
+    if (!window.confirm(`Voulez-vous vraiment supprimer le produit "${title}" de la boutique ?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/store/deleteProduct", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      if (response.ok) {
+        fetchStoreProducts();
+      } else {
+        const data = await response.json();
+        alert(data.error || "Erreur lors de la suppression.");
+      }
+    } catch (err) {
+      console.error("Erreur suppression produit :", err);
+    }
+  };
+
+  // Update Order Status Handler
+  const handleUpdateOrderStatus = async (id: string, status: "pending" | "delivered" | "cancelled") => {
+    try {
+      const response = await fetch("/api/admin/store/updateOrderStatus", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ id, status }),
+      });
+
+      if (response.ok) {
+        fetchStoreOrders();
+      } else {
+        const data = await response.json();
+        alert(data.error || "Erreur lors de la mise à jour du statut.");
+      }
+    } catch (err) {
+      console.error("Erreur statut commande :", err);
+    }
+  };
 
   // Fetch Audit Logs from database
   const fetchLogs = async (token = adminToken) => {
@@ -853,6 +1049,41 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
           <FileText className="w-4 h-4" />
           <span>Logs d'Audit d'Activité</span>
         </button>
+
+        <button
+          onClick={() => {
+            setActiveTab("store_products");
+            fetchStoreProducts();
+          }}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTab === "store_products"
+              ? "border-cyan-500 text-cyan-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 text-cyan-400" />
+          <span>Boutique & Produits</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab("store_orders");
+            fetchStoreOrders();
+          }}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer relative flex items-center gap-1.5 ${
+            activeTab === "store_orders"
+              ? "border-cyan-500 text-cyan-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Package className="w-4 h-4 text-cyan-400" />
+          <span>Commandes Boutique</span>
+          {storeOrders.filter(o => o.status === "pending").length > 0 && (
+            <span className="bg-amber-500 text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full animate-pulse ml-1">
+              {storeOrders.filter(o => o.status === "pending").length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Conditional Rendering based on selected tab with smooth entry/exit transitions */}
@@ -1496,7 +1727,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
             )}
           </div>
         </motion.div>
-      ) : (
+      ) : activeTab === "logs" ? (
         /* RENDER AUDIT LOGS TAB */
         <motion.div
           key="logs"
@@ -1558,7 +1789,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                       <span>Chargement du journal d'activité...</span>
                     </td>
                   </tr>
-                ) : logs.filter(log => log.username.toLowerCase().includes(searchLogQuery.toLowerCase())).length === 0 ? (
+                ) : logs.filter(log => (log.username || "").toLowerCase().includes(searchLogQuery.toLowerCase())).length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-12 text-center text-slate-500 font-mono text-xs">
                       Aucun log d'activité enregistré pour le moment.
@@ -1566,13 +1797,13 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                   </tr>
                 ) : (
                   logs
-                    .filter(log => log.username.toLowerCase().includes(searchLogQuery.toLowerCase()))
+                    .filter(log => (log.username || "").toLowerCase().includes(searchLogQuery.toLowerCase()))
                     .map((log) => {
                       const dateStr = new Date(log.timestamp).toLocaleString("fr-FR");
                       return (
                         <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
                           <td className="py-3 px-4 font-mono text-slate-400">{dateStr}</td>
-                          <td className="py-3 px-4 font-mono font-bold text-white">{log.username}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-white">{log.username || "Système"}</td>
                           <td className="py-3 px-4">
                             {log.event === "login" ? (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[10px]">
@@ -1585,9 +1816,9 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                                 DÉCONNEXION
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold text-[10px]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                                EXPIRATION
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                                {log.action || "ACTIVITÉ"}
                               </span>
                             )}
                           </td>
@@ -1600,8 +1831,620 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
             </table>
           </div>
         </motion.div>
+      ) : activeTab === "store_products" ? (
+        /* RENDER BOUTIQUE & PRODUITS TAB */
+        <motion.div
+          key="store_products"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full"
+        >
+          {/* Form Side: Add Product */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyan-500 to-blue-500" />
+
+              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-cyan-400" />
+                Ajouter un produit digital
+              </h2>
+
+              {prodFormError && (
+                <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{prodFormError}</span>
+                </div>
+              )}
+
+              {prodFormSuccess && (
+                <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{prodFormSuccess}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleCreateProduct} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                    Titre du produit
+                  </label>
+                  <input
+                    type="text"
+                    value={prodTitle}
+                    onChange={(e) => setProdTitle(e.target.value)}
+                    placeholder="ex: Netflix Premium 4K Private"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                      Catégorie
+                    </label>
+                    <select
+                      value={prodCategory}
+                      onChange={(e) => setProdCategory(e.target.value as ProductCategory)}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="VOD / Streaming">VOD / Streaming</option>
+                      <option value="Clés Logiciels / OS">Clés Logiciels / OS</option>
+                      <option value="Social Media Boost">Social Media Boost</option>
+                      <option value="IPTV Premium">IPTV Premium</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                      Statut Stock
+                    </label>
+                    <select
+                      value={prodStock}
+                      onChange={(e) => setProdStock(e.target.value as StockStatus)}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="in_stock">En Stock</option>
+                      <option value="low_stock">Stock Limité</option>
+                      <option value="out_of_stock">Rupture</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                      Prix Vente (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={prodPrice}
+                      onChange={(e) => setProdPrice(e.target.value)}
+                      placeholder="9.99"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                      Prix Barré (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={prodOriginalPrice}
+                      onChange={(e) => setProdOriginalPrice(e.target.value)}
+                      placeholder="19.99"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                      Badge Promo
+                    </label>
+                    <input
+                      type="text"
+                      value={prodBadge}
+                      onChange={(e) => setProdBadge(e.target.value)}
+                      placeholder="ex: POPULAIRE"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                      Durée / Type
+                    </label>
+                    <input
+                      type="text"
+                      value={prodDuration}
+                      onChange={(e) => setProdDuration(e.target.value)}
+                      placeholder="ex: 1 Mois UHD"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                    Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={prodDesc}
+                    onChange={(e) => setProdDesc(e.target.value)}
+                    placeholder="Accès immédiat et garanti..."
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
+                    Avantages (séparés par des virgules)
+                  </label>
+                  <input
+                    type="text"
+                    value={prodFeatures}
+                    onChange={(e) => setProdFeatures(e.target.value)}
+                    placeholder="Ultra HD 4K, 1 Écran, Support 24/7"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-cyan-500/20 text-sm cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Ajouter le Produit</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Catalog Side: Product List */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 p-6 shadow-xl relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5 text-cyan-400" />
+                    Catalogue de la Boutique ({storeProducts.length})
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Produits en vente sur la plateforme</p>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-48">
+                    <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher..."
+                      value={searchProdQuery}
+                      onChange={(e) => setSearchProdQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+
+                  <button
+                    onClick={fetchStoreProducts}
+                    className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 rounded-xl cursor-pointer"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingStoreProducts ? "animate-spin text-cyan-400" : ""}`} />
+                  </button>
+                </div>
+              </div>
+
+              {loadingStoreProducts ? (
+                <div className="py-20 text-center text-slate-500 text-sm flex items-center justify-center gap-2">
+                  <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" />
+                  Chargement des produits...
+                </div>
+              ) : storeProducts.length === 0 ? (
+                <div className="py-16 text-center text-slate-500">
+                  <ShoppingBasket className="w-12 h-12 mx-auto mb-3 opacity-20 text-cyan-400" />
+                  <p className="text-sm font-semibold">Aucun produit dans la boutique</p>
+                  <p className="text-xs text-slate-600 mt-1">Utilisez le formulaire pour en ajouter un.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {storeProducts
+                    .filter((p) => {
+                      const q = searchProdQuery.toLowerCase();
+                      return p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+                    })
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        className="bg-slate-950/60 border border-slate-800 hover:border-slate-700 rounded-xl p-4 flex flex-col justify-between relative group transition-all"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                              {p.category}
+                            </span>
+                            {p.badge && (
+                              <span className="text-[9px] font-extrabold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                                {p.badge}
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-sm font-bold text-white mb-1">{p.title}</h3>
+                          <p className="text-xs text-slate-400 line-clamp-2 mb-3">{p.description}</p>
+
+                          <div className="flex items-baseline gap-2 mb-3">
+                            <span className="text-lg font-extrabold text-white">{p.price.toFixed(2)} €</span>
+                            {p.originalPrice && (
+                              <span className="text-xs text-slate-500 line-through">{p.originalPrice.toFixed(2)} €</span>
+                            )}
+                            <span className="text-[10px] text-slate-400 ml-auto font-medium">{p.durationOrType}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            p.stockStatus === "in_stock" 
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+                              : p.stockStatus === "low_stock"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          }`}>
+                            {p.stockStatus === "in_stock" ? "En stock" : p.stockStatus === "low_stock" ? "Stock limité" : "Rupture"}
+                          </span>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditingProd(p)}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs cursor-pointer"
+                              title="Modifier"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(p.id, p.title)}
+                              className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs cursor-pointer"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      ) : (
+        /* RENDER COMMANDES BOUTIQUE TAB */
+        <motion.div
+          key="store_orders"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="space-y-6 w-full"
+        >
+          {/* Stats Bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Commandes Totales</p>
+                <p className="text-2xl font-bold text-white">{storeOrders.length}</p>
+              </div>
+              <Package className="w-8 h-8 text-cyan-400 opacity-80" />
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400 uppercase">En Attente</p>
+                <p className="text-2xl font-bold text-amber-400">
+                  {storeOrders.filter(o => o.status === "pending").length}
+                </p>
+              </div>
+              <Clock className="w-8 h-8 text-amber-400 opacity-80" />
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Livrées</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  {storeOrders.filter(o => o.status === "delivered").length}
+                </p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-emerald-400 opacity-80" />
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400 uppercase">Revenu Généré</p>
+                <p className="text-2xl font-bold text-cyan-300">
+                  {storeOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0).toFixed(2)} €
+                </p>
+              </div>
+              <DollarSign className="w-8 h-8 text-cyan-300 opacity-80" />
+            </div>
+          </div>
+
+          {/* Orders Content */}
+          <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 p-6 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Package className="w-5 h-5 text-cyan-400" />
+                  Gestion des Commandes Clients
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">Validez et délivrez les abonnements achetés par vos clients</p>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-56">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher client, email, ID..."
+                    value={searchOrderQuery}
+                    onChange={(e) => setSearchOrderQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <button
+                  onClick={() => fetchStoreOrders()}
+                  className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800 rounded-xl cursor-pointer"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingStoreOrders ? "animate-spin text-cyan-400" : ""}`} />
+                </button>
+              </div>
+            </div>
+
+            {loadingStoreOrders ? (
+              <div className="py-20 text-center text-slate-500 text-sm flex items-center justify-center gap-2">
+                <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" />
+                Chargement des commandes...
+              </div>
+            ) : storeOrders.length === 0 ? (
+              <div className="py-16 text-center text-slate-500">
+                <Inbox className="w-12 h-12 mx-auto mb-3 opacity-20 text-cyan-400" />
+                <p className="text-sm font-semibold">Aucune commande enregistrée</p>
+                <p className="text-xs text-slate-600 mt-1">Les achats faits sur la boutique s'afficheront ici.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {storeOrders
+                  .filter((o) => {
+                    const q = searchOrderQuery.toLowerCase();
+                    return (
+                      o.id.toLowerCase().includes(q) ||
+                      o.customerName.toLowerCase().includes(q) ||
+                      o.customerEmail.toLowerCase().includes(q) ||
+                      o.customerPhone.toLowerCase().includes(q)
+                    );
+                  })
+                  .map((order) => {
+                    const dateStr = new Date(order.createdAt).toLocaleString("fr-FR");
+                    return (
+                      <div
+                        key={order.id}
+                        className="bg-slate-950/60 border border-slate-800 hover:border-slate-700 rounded-xl p-5 transition-all"
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-white text-sm">#{order.id}</span>
+                              <span className="text-xs text-slate-500">• {dateStr}</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-300">
+                              <span className="font-semibold text-cyan-400">{order.customerName}</span>
+                              <span className="text-slate-500">|</span>
+                              <a href={`mailto:${order.customerEmail}`} className="hover:underline text-slate-400">
+                                {order.customerEmail}
+                              </a>
+                              <span className="text-slate-500">|</span>
+                              <a
+                                href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-400 hover:underline flex items-center gap-1 font-mono text-[11px]"
+                              >
+                                <PhoneCall className="w-3 h-3" />
+                                {order.customerPhone}
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${
+                              order.status === "delivered"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : order.status === "pending"
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            }`}>
+                              {order.status === "delivered" ? "Livré" : order.status === "pending" ? "En attente" : "Annulé"}
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                              {order.status !== "delivered" && (
+                                <button
+                                  onClick={() => handleUpdateOrderStatus(order.id, "delivered")}
+                                  className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                                >
+                                  Marquer Livré
+                                </button>
+                              )}
+                              {order.status !== "pending" && (
+                                <button
+                                  onClick={() => handleUpdateOrderStatus(order.id, "pending")}
+                                  className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                                >
+                                  En attente
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Order Items */}
+                        <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                              Articles commandés :
+                            </span>
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {order.items.map((item, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-slate-900 border border-slate-800 text-slate-200 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1.5"
+                                >
+                                  <span className="font-bold text-cyan-400">{item.quantity}x</span>
+                                  <span>{item.product.title}</span>
+                                  <span className="text-slate-500">({(item.product.price * item.quantity).toFixed(2)} €)</span>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs text-slate-400 block">Total de la commande</span>
+                            <span className="text-lg font-extrabold text-white">{order.totalAmount.toFixed(2)} €</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
+
+      {/* Edit Digital Product Modal */}
+      <AnimatePresence>
+        {editingProd && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative"
+            >
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-cyan-400" />
+                Modifier le Produit Digital
+              </h3>
+
+              <form onSubmit={handleSaveEditProduct} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Titre</label>
+                  <input
+                    type="text"
+                    value={editingProd.title}
+                    onChange={(e) => setEditingProd({ ...editingProd, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Catégorie</label>
+                    <select
+                      value={editingProd.category}
+                      onChange={(e) => setEditingProd({ ...editingProd, category: e.target.value as ProductCategory })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="VOD / Streaming">VOD / Streaming</option>
+                      <option value="Clés Logiciels / OS">Clés Logiciels / OS</option>
+                      <option value="Social Media Boost">Social Media Boost</option>
+                      <option value="IPTV Premium">IPTV Premium</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Stock</label>
+                    <select
+                      value={editingProd.stockStatus}
+                      onChange={(e) => setEditingProd({ ...editingProd, stockStatus: e.target.value as StockStatus })}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="in_stock">En Stock</option>
+                      <option value="low_stock">Stock Limité</option>
+                      <option value="out_of_stock">Rupture</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Prix (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editingProd.price}
+                      onChange={(e) => setEditingProd({ ...editingProd, price: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Prix Barré (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editingProd.originalPrice || ""}
+                      onChange={(e) => setEditingProd({ ...editingProd, originalPrice: parseFloat(e.target.value) || undefined })}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">Description</label>
+                  <textarea
+                    rows={2}
+                    value={editingProd.description}
+                    onChange={(e) => setEditingProd({ ...editingProd, description: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProd(null)}
+                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-sm transition-colors cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg cursor-pointer"
+                  >
+                    Sauvegarder
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Edit IPTV User Modal */}
       <AnimatePresence>

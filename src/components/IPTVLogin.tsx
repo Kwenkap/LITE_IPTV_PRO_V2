@@ -25,11 +25,12 @@ export function decryptCredentials(cipher: string): string {
 
 interface IPTVLoginProps {
   onNavigateToAdmin: () => void;
+  onNavigateToStore?: () => void;
   onPlayStream: (url: string, username: string, expiresAt: number) => void;
   initialError?: string;
 }
 
-export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialError }: IPTVLoginProps) {
+export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlayStream, initialError }: IPTVLoginProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -364,18 +365,23 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
                   Achetez vos accès instantanés 12 ou 24 mois sur notre Marketplace Partenaire au meilleur prix du marché.
                 </p>
               </div>
-              <motion.a
+              <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(245, 158, 11, 0.4)" }}
                 whileTap={{ scale: 0.95 }}
-                href="https://www.premium-iptv-market.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                type="button"
+                onClick={() => {
+                  if (onNavigateToStore) {
+                    onNavigateToStore();
+                  } else {
+                    window.location.href = "/store";
+                  }
+                }}
                 className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/10"
               >
                 <ShoppingCart className="w-4 h-4 text-slate-950" />
                 <span>Acheter un abonnement</span>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-950" />
-              </motion.a>
+              </motion.button>
             </div>
           </motion.div>
 

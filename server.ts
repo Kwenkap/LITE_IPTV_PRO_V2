@@ -1179,6 +1179,178 @@ app.get("/api/stream", async (req, res) => {
   }
 });
 
+// --- STORE API ENDPOINTS ---
+
+// GET /api/store/products
+app.get("/api/store/products", async (req, res) => {
+  try {
+    const productsSnapshot = await db.collection("store_products").get();
+    const products: any[] = [];
+    productsSnapshot.forEach((doc: any) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+    return res.json(products);
+  } catch (err) {
+    console.error("Error fetching store products:", err);
+    return res.status(500).json({ error: "Erreur de chargement des produits" });
+  }
+});
+
+// POST /api/admin/store/createProduct
+app.post("/api/admin/store/createProduct", requireAdmin, async (req, res) => {
+  const { title, category, price, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = req.body;
+  if (!title || !category || price === undefined) {
+    return res.status(400).json({ error: "Titre, catégorie et prix requis" });
+  }
+
+  try {
+    const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
+    const newProduct = {
+      title,
+      category,
+      price: Number(price),
+      originalPrice: originalPrice ? Number(originalPrice) : undefined,
+      description: description || "",
+      stockStatus: stockStatus || "in_stock",
+      badge: badge || "",
+      durationOrType: durationOrType || "Abonnement",
+      iconName: iconName || "Sparkles",
+      features: features || [],
+      createdAt: Date.now()
+    };
+
+    await db.collection("store_products").doc(id).set(newProduct);
+    return res.json({ success: true, message: "Produit créé avec succès", product: { id, ...newProduct } });
+  } catch (err) {
+    console.error("Error creating store product:", err);
+    return res.status(500).json({ error: "Erreur lors de la création du produit" });
+  }
+});
+
+// POST /api/admin/store/editProduct
+app.post("/api/admin/store/editProduct", requireAdmin, async (req, res) => {
+  const { id, title, category, price, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "ID du produit requis" });
+  }
+
+  try {
+    const docRef = db.collection("store_products").doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: "Produit non trouvé" });
+    }
+
+    const updated = {
+      ...(title && { title }),
+      ...(category && { category }),
+      ...(price !== undefined && { price: Number(price) }),
+      ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
+      ...(description !== undefined && { description }),
+      ...(stockStatus && { stockStatus }),
+      ...(badge !== undefined && { badge }),
+      ...(durationOrType && { durationOrType }),
+      ...(iconName && { iconName }),
+      ...(features && { features })
+    };
+
+    await docRef.set(updated, { merge: true });
+    return res.json({ success: true, message: "Produit mis à jour avec succès" });
+  } catch (err) {
+    console.error("Error editing store product:", err);
+    return res.status(500).json({ error: "Erreur de modification du produit" });
+  }
+});
+
+// POST /api/admin/store/deleteProduct
+app.post("/api/admin/store/deleteProduct", requireAdmin, async (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "ID du produit requis" });
+  }
+
+  try {
+    await db.collection("store_products").doc(id).delete();
+    return res.json({ success: true, message: "Produit supprimé avec succès" });
+  } catch (err) {
+    console.error("Error deleting store product:", err);
+    return res.status(500).json({ error: "Erreur de suppression du produit" });
+  }
+});
+
+// GET /api/store/orders
+app.get("/api/store/orders", requireAdmin, async (req, res) => {
+  try {
+    const ordersSnapshot = await db.collection("store_orders").get();
+    const orders: any[] = [];
+    ordersSnapshot.forEach((doc: any) => {
+      orders.push({ id: doc.id, ...doc.data() });
+    });
+    // Sort by createdAt descending
+    orders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return res.json(orders);
+  } catch (err) {
+    console.error("Error fetching store orders:", err);
+    return res.status(500).json({ error: "Erreur de chargement des commandes" });
+  }
+});
+
+// POST /api/store/checkout
+app.post("/api/store/checkout", async (req, res) => {
+  const { customerName, customerEmail, customerPhone, paymentMethod, items, totalAmount } = req.body;
+  if (!customerName || !customerEmail || !customerPhone || !items || items.length === 0) {
+    return res.status(400).json({ error: "Informations de commande incomplètes" });
+  }
+
+  try {
+    const id = "ORD-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+    const newOrder = {
+      customerName,
+      customerEmail,
+      customerPhone,
+      paymentMethod: paymentMethod || "card",
+      items,
+      totalAmount: Number(totalAmount || 0),
+      status: "pending",
+      createdAt: Date.now()
+    };
+
+    await db.collection("store_orders").doc(id).set(newOrder);
+
+    // Log audit
+    try {
+      await db.collection("audit_logs").doc("log-" + Date.now()).set({
+        action: "NOUVELLE_COMMANDE_BOUTIQUE",
+        details: `Commande #${id} de ${customerName} (${totalAmount} €)`,
+        timestamp: Date.now()
+      });
+    } catch (e) {
+      // quiet
+    }
+
+    return res.json({ success: true, message: "Commande enregistrée", order: { id, ...newOrder } });
+  } catch (err) {
+    console.error("Error processing checkout:", err);
+    return res.status(500).json({ error: "Erreur lors du traitement de la commande" });
+  }
+});
+
+// POST /api/admin/store/updateOrderStatus
+app.post("/api/admin/store/updateOrderStatus", requireAdmin, async (req, res) => {
+  const { id, status } = req.body;
+  if (!id || !status) {
+    return res.status(400).json({ error: "ID de commande et statut requis" });
+  }
+
+  try {
+    await db.collection("store_orders").doc(id).set({ status }, { merge: true });
+    return res.json({ success: true, message: "Statut de la commande mis à jour" });
+  } catch (err) {
+    console.error("Error updating order status:", err);
+    return res.status(500).json({ error: "Erreur lors de la mise à jour" });
+  }
+});
+
 // --- MAIN SERVER / VITE INTEGRATION ---
 
 async function startServer() {
