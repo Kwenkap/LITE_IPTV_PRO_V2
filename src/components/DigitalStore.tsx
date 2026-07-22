@@ -4,7 +4,7 @@ import {
   Tv, Sparkles, Shield, Zap, Search, ShoppingBag, Check, Plus, Minus, Trash2, 
   X, Star, Lock, MessageSquare, Headphones, ShieldCheck, Palette, Bot, 
   FileText, TrendingUp, Share2, Users, PlayCircle, Film, ChevronRight,
-  CreditCard, Smartphone, CheckCircle, ArrowRight, ArrowLeft, Home, ExternalLink, HelpCircle
+  CreditCard, Smartphone, CheckCircle, ArrowRight, ArrowLeft, Home, ExternalLink, HelpCircle, Flame
 } from "lucide-react";
 import { DigitalProduct, CartItem, ProductCategory } from "../types/store";
 
@@ -44,6 +44,21 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  // Toast Notification State
+  const [toasts, setToasts] = useState<Array<{ id: string; title: string; description?: string; type?: "success" | "info" | "warning" }>>([]);
+
+  const addToast = (title: string, description?: string, type: "success" | "info" | "warning" = "success") => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts(prev => [...prev, { id, title, description, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   // Sync cart to localStorage
   useEffect(() => {
@@ -104,6 +119,11 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       }
       return [...prev, { product, quantity: 1 }];
     });
+    addToast(
+      "Produit ajouté au panier !",
+      `${product.title} — ${product.price.toFixed(2)} €`,
+      "success"
+    );
     setIsCartOpen(true);
   };
 
@@ -169,6 +189,11 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
         setCompletedOrder(data.order);
         setCart([]);
         setCheckoutStep("success");
+        addToast(
+          "Commande validée avec succès !",
+          "Votre accès vous sera transmis par WhatsApp sous quelques minutes.",
+          "success"
+        );
       } else {
         setOrderError(data.error || "Une erreur est survenue lors du paiement.");
       }
@@ -498,25 +523,50 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                 <div className="absolute -top-12 -right-12 w-24 h-24 bg-gradient-to-bl from-purple-500/20 to-cyan-500/20 rounded-full blur-xl group-hover:scale-150 transition-transform pointer-events-none" />
 
                 <div>
-                  {/* Top Header: Badge & Stock */}
+                  {/* Top Header: Badge & Stock with Framer Motion hover effects */}
                   <div className="flex items-center justify-between gap-2 mb-3">
                     {product.badge ? (
-                      <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 text-[10px] font-bold text-purple-300 uppercase tracking-wider">
+                      <motion.span 
+                        whileHover={{ scale: 1.08, rotate: -2 }}
+                        className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-fuchsia-500/20 to-purple-500/20 border border-amber-500/40 text-[10px] font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-amber-500/20"
+                      >
+                        <Flame className="w-3 h-3 text-amber-400 animate-pulse" />
                         {product.badge}
-                      </span>
+                      </motion.span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-[10px] text-slate-400 font-mono">
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-mono flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3 text-cyan-400" />
                         {product.durationOrType}
-                      </span>
+                      </motion.span>
                     )}
 
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
-                      product.stockStatus === "in_stock" 
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                    }`}>
-                      {product.stockStatus === "in_stock" ? "En stock" : "Stock limité"}
-                    </span>
+                    {product.stockStatus === "low_stock" ? (
+                      <motion.span 
+                        whileHover={{ scale: 1.08 }}
+                        className="text-[10px] font-extrabold font-mono px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-500/20 to-amber-500/20 border border-rose-500/40 text-rose-300 flex items-center gap-1 shadow-sm shadow-rose-500/20"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
+                        Stock Limité
+                      </motion.span>
+                    ) : product.stockStatus === "in_stock" ? (
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className="text-[10px] font-semibold font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        En stock
+                      </motion.span>
+                    ) : (
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className="text-[10px] font-semibold font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700"
+                      >
+                        Rupture
+                      </motion.span>
+                    )}
                   </div>
 
                   {/* Title & Icon */}
@@ -974,6 +1024,40 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           </div>
         )}
       </AnimatePresence>
+
+      {/* TOAST NOTIFICATION CONTAINER */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4">
+        <AnimatePresence>
+          {toasts.map(toast => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="pointer-events-auto bg-[#0d0d12]/95 border border-purple-500/40 backdrop-blur-xl p-4 rounded-2xl shadow-2xl shadow-purple-950/60 flex items-start justify-between gap-3 text-white"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5 shadow-sm">
+                  <CheckCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white font-display">{toast.title}</h4>
+                  {toast.description && (
+                    <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">{toast.description}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => removeToast(toast.id)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
     </div>
   );
