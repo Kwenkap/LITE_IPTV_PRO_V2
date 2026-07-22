@@ -354,12 +354,15 @@ export async function initApiInterceptor() {
     }
     const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : "";
 
+    const reqMethod = (init?.method || "GET").toUpperCase();
+    const cleanPath = path.split("?")[0];
+
     try {
       // Ensure superusers and initial data are seeded
       await seedInitialDataClient();
 
       // --- ENDPOINT: POST /api/support/ticket ---
-      if (path === "/api/support/ticket" && init?.method === "POST") {
+      if (cleanPath === "/api/support/ticket" && reqMethod === "POST") {
         const { name, email, message } = body;
         if (!name || !email || !message) {
           return jsonResponse({ error: "Tous les champs sont requis" }, 400);
@@ -386,7 +389,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: GET /api/session/check-status ---
-      if (path.startsWith("/api/session/check-status") && init?.method === "GET") {
+      if (cleanPath.startsWith("/api/session/check-status") && reqMethod === "GET") {
         let username = "";
         try {
           const urlObj = new URL(urlString, window.location.origin);
@@ -440,7 +443,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/stream ---
-      if (path === "/api/stream" && init?.method === "POST") {
+      if (cleanPath === "/api/stream" && reqMethod === "POST") {
         const { username, password } = body;
         if (!username || !password) {
           return jsonResponse({ error: "Nom d'utilisateur et mot de passe requis" }, 400);
@@ -539,7 +542,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: GET /api/admin/users ---
-      if (path === "/api/admin/users" && init?.method === "GET") {
+      if (cleanPath === "/api/admin/users" && reqMethod === "GET") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -617,7 +620,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: GET /api/admin/admins ---
-      if (path === "/api/admin/admins" && init?.method === "GET") {
+      if (cleanPath === "/api/admin/admins" && reqMethod === "GET") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -663,7 +666,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/createUser ---
-      if (path === "/api/admin/createUser" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/createUser" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -733,7 +736,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/deleteUser ---
-      if (path === "/api/admin/deleteUser" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/deleteUser" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -765,7 +768,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/editUser ---
-      if (path === "/api/admin/editUser" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/editUser" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -833,7 +836,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/createAdmin ---
-      if (path === "/api/admin/createAdmin" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/createAdmin" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -888,7 +891,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/deleteAdmin ---
-      if (path === "/api/admin/deleteAdmin" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/deleteAdmin" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -923,7 +926,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/editAdmin ---
-      if (path === "/api/admin/editAdmin" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/editAdmin" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -987,7 +990,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: GET /api/admin/tickets ---
-      if (path === "/api/admin/tickets" && init?.method === "GET") {
+      if (cleanPath === "/api/admin/tickets" && reqMethod === "GET") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -1024,7 +1027,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/deleteTicket ---
-      if (path === "/api/admin/deleteTicket" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/deleteTicket" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -1054,7 +1057,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: POST /api/admin/resolveTicket ---
-      if (path === "/api/admin/resolveTicket" && init?.method === "POST") {
+      if (cleanPath === "/api/admin/resolveTicket" && reqMethod === "POST") {
         const isAuthorized = await verifyAdminToken(token);
         if (!isAuthorized) {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
@@ -1087,7 +1090,7 @@ export async function initApiInterceptor() {
       }
 
       // --- ENDPOINT: GET /api/admin/logs ---
-      if (path === "/api/admin/logs" && init?.method === "GET") {
+      if (cleanPath === "/api/admin/logs" && reqMethod === "GET") {
         let logs: any[] = [];
         let fetchedFromFirestore = false;
 
