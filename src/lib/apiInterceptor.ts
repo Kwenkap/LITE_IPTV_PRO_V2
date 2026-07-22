@@ -175,36 +175,83 @@ async function verifyAdminToken(token: string): Promise<boolean> {
   return true;
 }
 
-// Seed hermann & dwayne if they don't exist in Firestore
-async function seedSuperusersClient() {
-  // Always ensure they exist in localStorage first
+const DEFAULT_INITIAL_ADMINS = [
+  {
+    username: "dwayne",
+    passwordHash: "$2b$10$wMbT516N8V5hv9hD89lAw.RlUAdVBX8DzuiSEGrgKmQSZnNCiONye",
+    role: "superuser",
+    createdAt: 1783641796768
+  },
+  {
+    username: "hermann",
+    passwordHash: "$2b$10$Hi1PThK2iCUPm7ECHeJP/.YIv9RUXR7y4IVGPqIgR10MM23gromP.",
+    role: "admin",
+    createdAt: 1784015798380
+  },
+  {
+    username: "dwayne47h",
+    passwordHash: "$2b$10$bTZmX7AJnXC1Rf/xTC9aueqosX6HBjVTI16v6nNExBTEQ4aSLi2WW",
+    role: "admin",
+    createdAt: 1784019409579
+  }
+];
+
+const DEFAULT_INITIAL_IPTV_USERS = [
+  {
+    id: "fabrice",
+    username: "fabrice",
+    expiresAt: 1786801860000,
+    createdAt: 1784037085166,
+    status: "active",
+    encryptedUrl: "fd44a9b8e099c3b5bb0eee5a5f073a13:508d0e04851c6c82948b637488081212bd9a798c139f9854fdd48ab42fb65a3b",
+    passwordHash: "$2b$10$0wwkpt9/JIxWmhnb15k1tu3jYx68Pd3en7w/S94A3BQ0J2Smhy5Lq",
+    durationDays: 1
+  },
+  {
+    id: "her",
+    username: "her",
+    durationDays: 1,
+    createdAt: 1784015149078,
+    expiresAt: 1784651520000,
+    passwordHash: "$2b$10$a7MAspI3o1u5DBnUopyqOOH.NTKFpizN3e9qqXVbEu.yr9vWevf2q",
+    status: "expired",
+    encryptedUrl: "6dd9ca7542cc82baa6c52c87f2c52398:b0b5ae824ed809238d2b371f7c164563c4a08bb477de245eacf8e80dd6c353cc"
+  },
+  {
+    id: "jp",
+    username: "jp",
+    durationDays: 30,
+    encryptedUrl: "c8632c4e652b9bd85a6f9471bb591378:bada075ca074751bfe6d9b5accb45a6fa37e5a99f48b05ff82085a793c042f73",
+    passwordHash: "$2b$10$r5Ax.wwTtE92zIN/gvcfUek.LijLPT5qlcz.GvAPSQCoYZcR4xQ/i",
+    status: "active",
+    expiresAt: 1786794000000,
+    createdAt: 1784029250039
+  },
+  {
+    id: "paul",
+    username: "paul",
+    expiresAt: 1786631916208,
+    createdAt: 1784039916208,
+    passwordHash: "$2b$10$BALTd6GJ9jllqC5WT199DuuKoLAG0arwlKRiiQV.4.GdqiCNuvl3m",
+    encryptedUrl: "00b52ba08cb9bbf2fbbddc39d9f4cb40:e6aa691b17da652ecba5221601e713f0eabd53e38c5a731f9b942332e62c38ec",
+    status: "active",
+    durationDays: 30
+  }
+];
+
+// Seed superusers and default clients if they don't exist in localStorage or Firestore
+async function seedInitialDataClient() {
   try {
     const localAdmins = ClientLocalDB.get("admin_users");
-    let changed = false;
-
-    if (!localAdmins.some(a => a.username === "dwayne")) {
-      localAdmins.push({
-        username: "dwayne",
-        passwordHash: bcrypt.hashSync("admin123", 10),
-        createdAt: Date.now(),
-        role: "superuser"
-      });
-      changed = true;
+    if (!localAdmins || localAdmins.length === 0) {
+      ClientLocalDB.set("admin_users", DEFAULT_INITIAL_ADMINS);
+      console.log("Seeded default admins in localStorage.");
     }
 
-    if (!localAdmins.some(a => a.username === "hermann")) {
-      localAdmins.push({
-        username: "hermann",
-        passwordHash: bcrypt.hashSync("hermann2013", 10),
-        createdAt: Date.now(),
-        role: "superuser"
-      });
-      changed = true;
-    }
-
-    if (changed) {
-      ClientLocalDB.set("admin_users", localAdmins);
-      console.log("Seeded superusers in client localStorage.");
+    const localUsers = ClientLocalDB.get("iptv_users");
+    if (!localUsers || localUsers.length === 0) {
+      ClientLocalDB.set("iptv_users", DEFAULT_INITIAL_IPTV_USERS);
+      console.log("Seeded default IPTV users in localStorage.");
     }
   } catch (err) {
     console.warn("Client localStorage seeding failed:", err);
@@ -212,33 +259,23 @@ async function seedSuperusersClient() {
 
   if (!db) return;
   try {
-    const dwayneRef = doc(db, "admin_users", "dwayne");
-    const dwayneSnap = await getDoc(dwayneRef);
-    if (!dwayneSnap.exists()) {
-      const passwordHash = bcrypt.hashSync("admin123", 10);
-      await setDoc(dwayneRef, {
-        username: "dwayne",
-        passwordHash,
-        createdAt: Date.now(),
-        role: "superuser"
-      });
-      console.log("Seeded 'dwayne' in client Firestore.");
+    const adminsSnap = await getDocs(collection(db, "admin_users"));
+    if (adminsSnap.empty) {
+      console.log("Firestore admin_users collection empty. Seeding initial admins...");
+      for (const admin of DEFAULT_INITIAL_ADMINS) {
+        await setDoc(doc(db, "admin_users", admin.username), admin);
+      }
     }
 
-    const hermannRef = doc(db, "admin_users", "hermann");
-    const hermannSnap = await getDoc(hermannRef);
-    if (!hermannSnap.exists()) {
-      const passwordHash = bcrypt.hashSync("hermann2013", 10);
-      await setDoc(hermannRef, {
-        username: "hermann",
-        passwordHash,
-        createdAt: Date.now(),
-        role: "superuser"
-      });
-      console.log("Seeded 'hermann' in client Firestore.");
+    const usersSnap = await getDocs(collection(db, "iptv_users"));
+    if (usersSnap.empty) {
+      console.log("Firestore iptv_users collection empty. Seeding initial IPTV users...");
+      for (const user of DEFAULT_INITIAL_IPTV_USERS) {
+        await setDoc(doc(db, "iptv_users", user.username), user);
+      }
     }
   } catch (err) {
-    console.warn("Client seed warning:", err);
+    console.warn("Client Firestore seed warning:", err);
   }
 }
 
@@ -302,17 +339,24 @@ export async function initApiInterceptor() {
       }
     }
 
-    // Parse Authorization Bearer token
+    // Parse Authorization Bearer token reliably across all header formats
     let authHeader = "";
     if (init && init.headers) {
-      const headers = init.headers as Record<string, string>;
-      authHeader = headers["Authorization"] || headers["authorization"] || "";
+      if (typeof (init.headers as any).get === "function") {
+        authHeader = (init.headers as any).get("Authorization") || (init.headers as any).get("authorization") || "";
+      } else if (Array.isArray(init.headers)) {
+        const found = (init.headers as [string, string][]).find(([k]) => k.toLowerCase() === "authorization");
+        authHeader = found ? found[1] : "";
+      } else if (typeof init.headers === "object") {
+        const headers = init.headers as Record<string, string>;
+        authHeader = headers["Authorization"] || headers["authorization"] || headers["AUTHORIZATION"] || "";
+      }
     }
     const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : "";
 
     try {
-      // Ensure superusers are seeded
-      await seedSuperusersClient();
+      // Ensure superusers and initial data are seeded
+      await seedInitialDataClient();
 
       // --- ENDPOINT: POST /api/support/ticket ---
       if (path === "/api/support/ticket" && init?.method === "POST") {
@@ -508,38 +552,60 @@ export async function initApiInterceptor() {
         if (db) {
           try {
             const usersSnap = await getDocs(collection(db, "iptv_users"));
-            for (const docSnap of usersSnap.docs) {
-              const data = docSnap.data();
-              const expectedStatus = data.expiresAt > now ? "active" : "expired";
+            if (!usersSnap.empty) {
+              for (const docSnap of usersSnap.docs) {
+                const data = docSnap.data();
+                const expectedStatus = data.expiresAt > now ? "active" : "expired";
 
-              if (data.status !== expectedStatus) {
-                await updateDoc(doc(db, "iptv_users", docSnap.id), { status: expectedStatus });
+                if (data.status !== expectedStatus) {
+                  try {
+                    await updateDoc(doc(db, "iptv_users", docSnap.id), { status: expectedStatus });
+                  } catch (e) {
+                    // ignore status update error
+                  }
+                }
+
+                let decryptedUrl = "";
+                try {
+                  decryptedUrl = await decryptClient(data.encryptedUrl);
+                } catch (e) {
+                  decryptedUrl = data.encryptedUrl || "";
+                }
+
+                users.push({
+                  id: docSnap.id,
+                  username: data.username || docSnap.id,
+                  ...data,
+                  status: expectedStatus,
+                  decryptedUrl
+                });
               }
-
-              const decryptedUrl = await decryptClient(data.encryptedUrl);
-
-              users.push({
-                id: docSnap.id,
-                ...data,
-                status: expectedStatus,
-                decryptedUrl
-              });
+              ClientLocalDB.set("iptv_users", users);
+              fetchedFromFirestore = true;
             }
-            // Save to localStorage as backup/sync
-            ClientLocalDB.set("iptv_users", users);
-            fetchedFromFirestore = true;
           } catch (err) {
             console.warn("Firestore fetch users failed, falling back to localStorage:", err);
           }
         }
 
-        if (!fetchedFromFirestore) {
-          const localUsers = ClientLocalDB.get("iptv_users");
+        if (!fetchedFromFirestore || users.length === 0) {
+          let localUsers = ClientLocalDB.get("iptv_users");
+          if (!localUsers || localUsers.length === 0) {
+            localUsers = DEFAULT_INITIAL_IPTV_USERS;
+            ClientLocalDB.set("iptv_users", localUsers);
+          }
           users = [];
           for (const u of localUsers) {
             const expectedStatus = u.expiresAt > now ? "active" : "expired";
-            const decryptedUrl = await decryptClient(u.encryptedUrl);
+            let decryptedUrl = "";
+            try {
+              decryptedUrl = await decryptClient(u.encryptedUrl);
+            } catch (e) {
+              decryptedUrl = u.encryptedUrl || "";
+            }
             users.push({
+              id: u.username || u.id,
+              username: u.username || u.id,
               ...u,
               status: expectedStatus,
               decryptedUrl
@@ -563,27 +629,32 @@ export async function initApiInterceptor() {
         if (db) {
           try {
             const adminsSnap = await getDocs(collection(db, "admin_users"));
-            adminsSnap.forEach((docSnap) => {
-              const data = docSnap.data();
-              admins.push({
-                username: docSnap.id,
-                createdAt: data.createdAt,
-                role: data.role || "admin"
+            if (!adminsSnap.empty) {
+              adminsSnap.forEach((docSnap) => {
+                const data = docSnap.data();
+                admins.push({
+                  username: docSnap.id || data.username,
+                  createdAt: data.createdAt || Date.now(),
+                  role: data.role || "admin"
+                });
               });
-            });
-            // Save to localStorage as backup/sync
-            ClientLocalDB.set("admin_users_list_cache", admins);
-            fetchedFromFirestore = true;
+              ClientLocalDB.set("admin_users_list_cache", admins);
+              fetchedFromFirestore = true;
+            }
           } catch (err) {
             console.warn("Firestore fetch admins failed, falling back to localStorage:", err);
           }
         }
 
-        if (!fetchedFromFirestore) {
-          const fullAdmins = ClientLocalDB.get("admin_users");
+        if (!fetchedFromFirestore || admins.length === 0) {
+          let fullAdmins = ClientLocalDB.get("admin_users");
+          if (!fullAdmins || fullAdmins.length === 0) {
+            fullAdmins = DEFAULT_INITIAL_ADMINS;
+            ClientLocalDB.set("admin_users", fullAdmins);
+          }
           admins = fullAdmins.map(a => ({
             username: a.username,
-            createdAt: a.createdAt,
+            createdAt: a.createdAt || Date.now(),
             role: a.role || "admin"
           }));
         }
