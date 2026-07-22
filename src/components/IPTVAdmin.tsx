@@ -38,7 +38,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"users" | "admins" | "tickets">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "admins" | "tickets" | "logs">("users");
 
   // IPTV Users States
   const [users, setUsers] = useState<IPTVUser[]>([]);
@@ -54,6 +54,11 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [adminsList, setAdminsList] = useState<AdminUser[]>([]);
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   const [searchAdminQuery, setSearchAdminQuery] = useState("");
+
+  // Audit Logs States
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [searchLogQuery, setSearchLogQuery] = useState("");
 
   // IPTV Creation Form States
   const [newUsername, setNewUsername] = useState("");
@@ -96,8 +101,30 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
       fetchUsers(adminToken);
       fetchAdmins(adminToken);
       fetchTickets(adminToken);
+      fetchLogs(adminToken);
     }
   }, []);
+
+  // Fetch Audit Logs from database
+  const fetchLogs = async (token = adminToken) => {
+    if (!token) return;
+    setLoadingLogs(true);
+    try {
+      const response = await fetch("/api/admin/logs", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(data);
+      }
+    } catch (err) {
+      console.error("Erreur chargement des logs :", err);
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
 
   // Fetch IPTV Users from database
   const fetchUsers = async (token = adminToken) => {
@@ -812,11 +839,34 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
             </span>
           )}
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("logs");
+            fetchLogs();
+          }}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTab === "logs"
+              ? "border-violet-500 text-violet-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Logs d'Audit d'Activité</span>
+        </button>
       </div>
 
-      {/* Conditional Rendering based on selected tab */}
-      {activeTab === "users" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="users-tab-content">
+      {/* Conditional Rendering based on selected tab with smooth entry/exit transitions */}
+      <AnimatePresence mode="wait">
+        {activeTab === "users" ? (
+          <motion.div
+            key="users"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full"
+            id="users-tab-content"
+          >
           
           {/* Left Side: Create User Form */}
           <div className="lg:col-span-5 space-y-6">
@@ -1019,18 +1069,21 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                     <p className="text-xs text-slate-400 max-w-xs mt-1">Creez votre premier utilisateur a l'aide du formulaire de gauche pour demarrer la gestion d'abonnements.</p>
                   </div>
                 ) : (
-                  filteredUsers.map((user) => {
-                    const directLink = `${window.location.origin}/api/stream?u=${encodeURIComponent(user.username)}&p=PARTAGER_MOT_DE_PASSE`;
-                    const isUrlVisible = visibleUrls[user.id] || false;
+                  <AnimatePresence mode="popLayout">
+                    {filteredUsers.map((user) => {
+                      const directLink = `${window.location.origin}/api/stream?u=${encodeURIComponent(user.username)}&p=PARTAGER_MOT_DE_PASSE`;
+                      const isUrlVisible = visibleUrls[user.id] || false;
 
-                    return (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-slate-950/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-800 p-4 rounded-xl transition-all relative group"
-                        key={user.id}
-                      >
+                      return (
+                        <motion.div
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="bg-slate-950/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-800 p-4 rounded-xl transition-all relative group"
+                          key={user.id}
+                        >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                           <div className="flex items-center gap-2.5">
                             <div className={`p-2 rounded-lg ${user.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
@@ -1122,16 +1175,25 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                         </div>
                       </motion.div>
                     );
-                  })
+                  })}
+                </AnimatePresence>
                 )}
               </div>
               
             </div>
           </div>
 
-        </div>
+        </motion.div>
       ) : activeTab === "admins" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="admins-tab-content">
+        <motion.div
+          key="admins"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full"
+          id="admins-tab-content"
+        >
           
           {/* Left Side: Create Administrator Form */}
           <div className="lg:col-span-5 space-y-6">
@@ -1300,9 +1362,17 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
             </div>
           </div>
 
-        </div>
-      ) : (
-        <div className="space-y-6" id="tickets-tab-content">
+        </motion.div>
+      ) : activeTab === "tickets" ? (
+        <motion.div
+          key="tickets"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="space-y-6 w-full"
+          id="tickets-tab-content"
+        >
           <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-fuchsia-500" />
             
@@ -1425,8 +1495,113 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
+      ) : (
+        /* RENDER AUDIT LOGS TAB */
+        <motion.div
+          key="logs"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800 p-6 shadow-xl relative overflow-hidden w-full"
+          id="admin-logs-panel"
+        >
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-fuchsia-500" />
+          
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-violet-400" />
+                Journal d'activité d'audit (Logs)
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">Suivi en temps réel des connexions, déconnexions et expirations de comptes</p>
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom..."
+                  value={searchLogQuery}
+                  onChange={(e) => setSearchLogQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-850 rounded-xl text-slate-200 placeholder-slate-650 focus:outline-none focus:border-violet-500 text-xs font-mono"
+                />
+              </div>
+              <button
+                onClick={() => fetchLogs()}
+                disabled={loadingLogs}
+                className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                title="Actualiser les logs"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingLogs ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-850 bg-slate-950/40">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-850">
+                  <th className="py-3 px-4">Horodatage</th>
+                  <th className="py-3 px-4">Utilisateur</th>
+                  <th className="py-3 px-4">Événement</th>
+                  <th className="py-3 px-4">Détails</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+                {loadingLogs ? (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-slate-500">
+                      <RefreshCw className="w-6 h-6 animate-spin mx-auto text-violet-500 mb-2" />
+                      <span>Chargement du journal d'activité...</span>
+                    </td>
+                  </tr>
+                ) : logs.filter(log => log.username.toLowerCase().includes(searchLogQuery.toLowerCase())).length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-slate-500 font-mono text-xs">
+                      Aucun log d'activité enregistré pour le moment.
+                    </td>
+                  </tr>
+                ) : (
+                  logs
+                    .filter(log => log.username.toLowerCase().includes(searchLogQuery.toLowerCase()))
+                    .map((log) => {
+                      const dateStr = new Date(log.timestamp).toLocaleString("fr-FR");
+                      return (
+                        <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-3 px-4 font-mono text-slate-400">{dateStr}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-white">{log.username}</td>
+                          <td className="py-3 px-4">
+                            {log.event === "login" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                CONNEXION
+                              </span>
+                            ) : log.event === "logout" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-550/20 font-semibold text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                DÉCONNEXION
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                                EXPIRATION
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-slate-400">{log.details}</td>
+                        </tr>
+                      );
+                    })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
       )}
+    </AnimatePresence>
 
       {/* Edit IPTV User Modal */}
       <AnimatePresence>

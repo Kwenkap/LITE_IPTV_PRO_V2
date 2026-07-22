@@ -12,6 +12,9 @@ export default function App() {
     return window.location.pathname;
   });
   const [activeStreamUrl, setActiveStreamUrl] = useState<string | null>(null);
+  const [activeStreamUsername, setActiveStreamUsername] = useState<string>("");
+  const [activeStreamExpiresAt, setActiveStreamExpiresAt] = useState<number>(0);
+  const [loginError, setLoginError] = useState<string>("");
 
   // Watch for history state changes or manual page changes
   useEffect(() => {
@@ -26,6 +29,14 @@ export default function App() {
   const navigateTo = (path: string) => {
     window.history.pushState({}, "", path);
     setCurrentPath(path);
+  };
+
+  const handleSessionExpired = () => {
+    setActiveStreamUrl(null);
+    setActiveStreamUsername("");
+    setActiveStreamExpiresAt(0);
+    setLoginError("Votre session a expiré ou le compte a été désactivé.");
+    navigateTo("/iptv");
   };
 
   const isAdminPage = currentPath.includes("/admin");
@@ -107,13 +118,29 @@ export default function App() {
         {/* Dynamic conditional render based on simulated path */}
         <div className="w-full flex justify-center">
           {activeStreamUrl ? (
-            <IPTVPlayer url={activeStreamUrl} onClose={() => setActiveStreamUrl(null)} />
+            <IPTVPlayer 
+              url={activeStreamUrl} 
+              username={activeStreamUsername}
+              expiresAt={activeStreamExpiresAt}
+              onClose={() => {
+                setActiveStreamUrl(null);
+                setActiveStreamUsername("");
+                setActiveStreamExpiresAt(0);
+              }} 
+              onSessionExpired={handleSessionExpired}
+            />
           ) : isAdminPage ? (
             <IPTVAdmin onNavigateToLogin={() => navigateTo("/iptv")} />
           ) : (
             <IPTVLogin 
               onNavigateToAdmin={() => navigateTo("/iptv/admin")} 
-              onPlayStream={(url) => setActiveStreamUrl(url)} 
+              onPlayStream={(url, username, expiresAt) => {
+                setLoginError(""); // clear any prior errors
+                setActiveStreamUrl(url);
+                setActiveStreamUsername(username);
+                setActiveStreamExpiresAt(expiresAt);
+              }} 
+              initialError={loginError}
             />
           )}
         </div>

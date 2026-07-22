@@ -6,6 +6,23 @@ import {
 } from "lucide-react";
 import FAQSection from "./FAQSection";
 
+// Simple robust obfuscation/encryption for local storage
+export function encryptCredentials(text: string): string {
+  if (!text) return "";
+  const shifted = text.split("").map(c => String.fromCharCode(c.charCodeAt(0) + 3)).join("");
+  return btoa(encodeURIComponent(shifted));
+}
+
+export function decryptCredentials(cipher: string): string {
+  if (!cipher) return "";
+  try {
+    const raw = decodeURIComponent(atob(cipher));
+    return raw.split("").map(c => String.fromCharCode(c.charCodeAt(0) - 3)).join("");
+  } catch (e) {
+    return "";
+  }
+}
+
 interface IPTVLoginProps {
   onNavigateToAdmin: () => void;
   onPlayStream: (url: string, username: string, expiresAt: number) => void;
@@ -18,6 +35,36 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState(initialError || "");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberedUser, setRememberedUser] = useState<{ username: string; expiresAt: number } | null>(null);
+
+  // Load remembered credentials on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("iptv_remembered_credentials");
+    if (stored) {
+      try {
+        const { u, p } = JSON.parse(stored);
+        const decUsername = decryptCredentials(u);
+        const decPassword = decryptCredentials(p);
+        if (decUsername && decPassword) {
+          setUsername(decUsername);
+          setPassword(decPassword);
+          setRememberMe(true);
+
+          // Get last session info if matches
+          const lastSession = localStorage.getItem("iptv_last_session_info");
+          if (lastSession) {
+            const parsedSession = JSON.parse(lastSession);
+            if (parsedSession.username.toLowerCase() === decUsername.toLowerCase()) {
+              setRememberedUser(parsedSession);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Erreur lors de la lecture des identifiants mémorisés :", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (initialError) {
@@ -25,9 +72,13 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
     }
   }, [initialError]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim() || !password.trim()) {
+  const handleSubmit = async (e?: React.FormEvent, customUser?: string, customPass?: string) => {
+    if (e) e.preventDefault();
+    
+    const loginUser = customUser || username;
+    const loginPass = customPass || password;
+
+    if (!loginUser.trim() || !loginPass.trim()) {
       setError("Veuillez saisir votre nom d'utilisateur et votre mot de passe.");
       return;
     }
@@ -39,7 +90,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
       const response = await fetch("/api/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: loginUser, password: loginPass }),
       });
 
       const data = await response.json();
@@ -54,6 +105,37 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
         return;
       }
 
+      // If standard user, handle "Remember Me" options
+      if (rememberMe) {
+        const credentialsObj = {
+          u: encryptCredentials(loginUser),
+          p: encryptCredentials(loginPass)
+        };
+        localStorage.setItem("iptv_remembered_credentials", JSON.stringify(credentialsObj));
+        localStorage.setItem("iptv_last_session_info", JSON.stringify({
+          username: data.username,
+          expiresAt: data.expiresAt
+        }));
+      } else {
+        localStorage.removeItem("iptv_remembered_credentials");
+        localStorage.removeItem("iptv_last_session_info");
+      }
+
+      // Log the successful connection
+      try {
+        await fetch("/api/logs/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: data.username,
+            event: "login",
+            details: "Connexion réussie au lecteur IPTV"
+          }),
+        });
+      } catch (logErr) {
+        console.warn("Audit log creation failed:", logErr);
+      }
+
       setIsRedirecting(true);
       setTimeout(() => {
         setIsLoading(false);
@@ -63,6 +145,22 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
     } catch (err: any) {
       setError(err.message || "Impossible de se connecter au serveur.");
       setIsLoading(false);
+    }
+  };
+
+  const handleQuickReconnect = () => {
+    const stored = localStorage.getItem("iptv_remembered_credentials");
+    if (stored) {
+      try {
+        const { u, p } = JSON.parse(stored);
+        const decUsername = decryptCredentials(u);
+        const decPassword = decryptCredentials(p);
+        if (decUsername && decPassword) {
+          handleSubmit(undefined, decUsername, decPassword);
+        }
+      } catch (e) {
+        setError("Impossible de relire les identifiants mémorisés.");
+      }
     }
   };
 
@@ -122,7 +220,35 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {rememberedUser && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-5 p-4 rounded-xl bg-violet-950/40 border border-violet-500/20 text-slate-300 text-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-bold text-white font-mono">{rememberedUser.username}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                    {rememberedUser.expiresAt > Date.now() ? "Compte Mémorisé" : "Expiré"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleQuickReconnect}
+                  disabled={isLoading || isRedirecting}
+                  className="w-full py-2.5 px-3 bg-violet-600/90 hover:bg-violet-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-violet-950/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  id="login-quick-reconnect-btn"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                  <span>Reconnexion Rapide</span>
+                </button>
+              </motion.div>
+            )}
+
+            <form onSubmit={(e) => handleSubmit(e)} className="space-y-5">
               <div>
                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                   Nom d'utilisateur
@@ -167,6 +293,20 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
                 </div>
               </div>
 
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center justify-between py-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-400 hover:text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded border-slate-800 bg-slate-950 text-violet-500 focus:ring-violet-500/50 w-4 h-4 cursor-pointer"
+                    id="login-remember-me-checkbox"
+                  />
+                  <span>Mémoriser mes identifiants</span>
+                </label>
+              </div>
+
               <motion.button
                 whileHover={{ scale: isRedirecting ? 1 : 1.01 }}
                 whileTap={{ scale: isRedirecting ? 1 : 0.99 }}
@@ -190,7 +330,8 @@ export default function IPTVLogin({ onNavigateToAdmin, onPlayStream, initialErro
                     <Play className="w-5 h-5 text-white fill-white animate-pulse" />
                     <span>Lancer mon flux TV</span>
                   </>
-                )}
+                )
+              }
               </motion.button>
             </form>
 

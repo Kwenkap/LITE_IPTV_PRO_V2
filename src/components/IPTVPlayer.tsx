@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Tv, Maximize, Minimize, ChevronLeft, ShieldCheck, Wifi, Clock, Fullscreen
+  Tv, Maximize, Minimize, ChevronLeft, ShieldCheck, Wifi, Clock, Fullscreen, AlertTriangle
 } from "lucide-react";
 
 interface IPTVPlayerProps {
@@ -19,6 +19,11 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showControls, setShowControls] = useState(true);
   
+  const [timeRemaining, setTimeRemaining] = useState<number>(() => {
+    return Math.max(0, expiresAt - Date.now());
+  });
+  const [showWarningToast, setShowWarningToast] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -27,9 +32,34 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
     if (!username || !expiresAt) return;
 
     const checkInterval = setInterval(async () => {
+      const now = Date.now();
+      const diff = expiresAt - now;
+      const remaining = Math.max(0, diff);
+      setTimeRemaining(remaining);
+
+      // Show warning toast if 5 mins (300,000 ms) or less are remaining
+      if (remaining > 0 && remaining <= 300000) {
+        setShowWarningToast(true);
+      } else {
+        setShowWarningToast(false);
+      }
+
       // 1. Client-side local time check (immediate, no network required)
-      if (Date.now() > expiresAt) {
+      if (now > expiresAt) {
         clearInterval(checkInterval);
+        try {
+          await fetch("/api/logs/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username,
+              event: "expired",
+              details: "Abonnement expiré en cours de visionnage (Vérification locale)"
+            }),
+          });
+        } catch (e) {
+          console.warn("Log expiration check failed:", e);
+        }
         onSessionExpired();
         return;
       }
@@ -41,6 +71,19 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
           const data = await response.json();
           if (data.status === "expired") {
             clearInterval(checkInterval);
+            try {
+              await fetch("/api/logs/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  username,
+                  event: "expired",
+                  details: `Compte désactivé ou expiré sur le serveur (Raison: ${data.reason || "inconnue"})`
+                }),
+              });
+            } catch (e) {
+              console.warn("Log expiration check failed:", e);
+            }
             onSessionExpired();
           }
         }
@@ -52,13 +95,53 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
     return () => clearInterval(checkInterval);
   }, [username, expiresAt, onSessionExpired]);
 
-  // Update clock every second
+  // Update clock and timeRemaining every second
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
+      const now = Date.now();
+      const diff = expiresAt - now;
+      const remaining = Math.max(0, diff);
+      setTimeRemaining(remaining);
+
+      if (remaining > 0 && remaining <= 300000) {
+        setShowWarningToast(true);
+      } else {
+        setShowWarningToast(false);
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [expiresAt]);
+
+  const formatTimeRemaining = (ms: number) => {
+    if (ms <= 0) return "Expiré";
+    const totalSecs = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m ${secs}s`;
+    }
+    return `${mins}m ${secs}s`;
+  };
+
+  const handleClosePlayer = async () => {
+    try {
+      await fetch("/api/logs/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          event: "logout",
+          details: "Déconnexion volontaire du lecteur IPTV"
+        }),
+      });
+    } catch (e) {
+      console.warn("Audit log logout failed:", e);
+    }
+    onClose();
+  };
 
   // Handle stream load simulation
   useEffect(() => {
@@ -198,7 +281,7 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
             {/* Left controller: back button & status */}
             <div className="flex items-center gap-3">
               <button
-                onClick={onClose}
+                onClick={handleClosePlayer}
                 className="p-2.5 bg-slate-900/80 hover:bg-slate-800 text-white rounded-xl border border-slate-700/50 transition-all flex items-center gap-2 cursor-pointer text-xs font-bold shadow-lg shadow-black/40 hover:scale-105 active:scale-95"
                 title="Retourner au portail"
                 id="player-back-btn"
@@ -221,6 +304,19 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
 
             {/* Right controller: quick action widgets & fullscreen toggle */}
             <div className="flex items-center gap-3">
+              {/* Real-time countdown subscription time pill */}
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-mono text-[10px] shadow-lg transition-all ${
+                timeRemaining <= 300000 
+                  ? "bg-rose-500/10 border-rose-500/30 text-rose-400 animate-pulse" 
+                  : "bg-slate-900/85 border-slate-800 text-slate-300"
+              }`}>
+                <Clock className={`w-3.5 h-3.5 ${timeRemaining <= 300000 ? "text-rose-500 animate-spin" : "text-violet-400"}`} />
+                <span className="font-semibold uppercase text-[9px] text-slate-400">Expiration :</span>
+                <span className={timeRemaining <= 300000 ? "font-bold text-rose-400 animate-pulse" : "font-semibold text-emerald-400"}>
+                  {formatTimeRemaining(timeRemaining)}
+                </span>
+              </div>
+
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/85 rounded-xl border border-slate-800 text-slate-300 font-mono text-[10px] shadow-lg">
                 <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                 <span className="font-bold">4K UHD PROJECTION</span>
@@ -247,13 +343,34 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
 
               {/* Close Button */}
               <button
-                onClick={onClose}
+                onClick={handleClosePlayer}
                 className="p-2.5 bg-rose-600/90 hover:bg-rose-500 text-white rounded-xl font-bold transition-all cursor-pointer shadow-lg hover:scale-105 active:scale-95"
                 title="Quitter le lecteur"
                 id="player-close-btn"
               >
                 Fermer
               </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Persistent Pre-Expiration Alert (5 minutes remaining warning toast) */}
+      <AnimatePresence>
+        {showWarningToast && timeRemaining > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -50, x: "-50%" }}
+            className="absolute top-18 left-1/2 transform -translate-x-1/2 z-50 p-4 bg-slate-950/95 border border-rose-500/30 rounded-2xl shadow-2xl flex items-start gap-3 text-slate-200 text-xs font-medium max-w-sm backdrop-blur-md"
+            id="session-expiration-warning-toast"
+          >
+            <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5 animate-bounce" />
+            <div className="space-y-1">
+              <span className="font-bold text-white block">Attention : Session expirant bientôt !</span>
+              <p className="text-slate-300 text-[11px] leading-relaxed">
+                Votre abonnement expire dans <span className="font-mono text-rose-400 font-bold">{formatTimeRemaining(timeRemaining)}</span>. Vous serez automatiquement déconnecté pour des raisons de sécurité.
+              </p>
             </div>
           </motion.div>
         )}

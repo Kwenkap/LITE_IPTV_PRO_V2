@@ -259,8 +259,41 @@ let db: any;
 try {
   const configPath = path.join(process.cwd(), "firebase-applet-config.json");
   let rawDb: any = null;
-  if (fs.existsSync(configPath)) {
-    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  let config: any = null;
+
+  // 1. Try reading from process.env.FIREBASE_CONFIG or process.env.FIREBASE_APPLET_CONFIG
+  const envConfigStr = process.env.FIREBASE_CONFIG || process.env.FIREBASE_APPLET_CONFIG;
+  if (envConfigStr) {
+    try {
+      config = JSON.parse(envConfigStr);
+    } catch (e) {
+      console.warn("Impossible de parser la variable d'environnement FIREBASE_CONFIG :", e);
+    }
+  }
+
+  // 2. Try individual environment variables
+  if (!config && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_API_KEY) {
+    config = {
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      apiKey: process.env.FIREBASE_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN || `${process.env.FIREBASE_PROJECT_ID}.firebaseapp.com`,
+      firestoreDatabaseId: process.env.FIREBASE_DATABASE_ID || "ai-studio-iptvsecure-557bbb75-14cd-45eb-b63e-ca2bab211260",
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.FIREBASE_APP_ID,
+    };
+  }
+
+  // 3. Fall back to local firebase-applet-config.json
+  if (!config && fs.existsSync(configPath)) {
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    } catch (e) {
+      console.warn("Erreur lors de la lecture de firebase-applet-config.json :", e);
+    }
+  }
+
+  if (config) {
     const clientApp = initClient({
       apiKey: config.apiKey,
       authDomain: config.authDomain,
@@ -270,9 +303,9 @@ try {
       appId: config.appId,
     });
     rawDb = getClientFirestore(clientApp, config.firestoreDatabaseId);
-    console.log("Firebase Web SDK (Firestore Client) Initialisé avec succès.");
+    console.log(`Firebase Web SDK (Firestore Client) initialisé avec succès pour le projet : ${config.projectId}`);
   } else {
-    console.warn("Fichier de configuration Firebase manquant. Fonctionnement en mode local uniquement.");
+    console.warn("Fichier/variables de configuration Firebase manquants. Fonctionnement en mode stockage local éphémère.");
   }
   db = new FirestoreSmartWrapper(rawDb);
 } catch (err) {
