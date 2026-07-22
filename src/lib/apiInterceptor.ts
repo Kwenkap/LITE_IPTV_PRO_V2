@@ -127,15 +127,45 @@ async function decryptClient(cipherText: string): Promise<string> {
   return "";
 }
 
-// Initialize Firebase client-side
+// Initialize Firebase client-side with full environment & fallback configuration
+const defaultFirebaseConfig = {
+  projectId: "prismatic-hologram-w7c1c",
+  appId: "1:354818024172:web:7be561aad0ea505f24bbc9",
+  apiKey: "AIzaSyBM4rgsDEbLJ2S3I3Xvdu2UJ2zKjc4gzLg",
+  authDomain: "prismatic-hologram-w7c1c.firebaseapp.com",
+  firestoreDatabaseId: "ai-studio-iptvsecure-557bbb75-14cd-45eb-b63e-ca2bab211260",
+  storageBucket: "prismatic-hologram-w7c1c.firebasestorage.app",
+  messagingSenderId: "354818024172"
+};
+
+let activeConfig: any = firebaseConfig || defaultFirebaseConfig;
+const metaEnv = (import.meta as any).env || {};
+if (metaEnv.VITE_FIREBASE_CONFIG) {
+  try {
+    activeConfig = JSON.parse(metaEnv.VITE_FIREBASE_CONFIG);
+  } catch (e) {
+    console.warn("Could not parse VITE_FIREBASE_CONFIG from env:", e);
+  }
+} else if (metaEnv.VITE_FIREBASE_PROJECT_ID && metaEnv.VITE_FIREBASE_API_KEY) {
+  activeConfig = {
+    projectId: metaEnv.VITE_FIREBASE_PROJECT_ID,
+    apiKey: metaEnv.VITE_FIREBASE_API_KEY,
+    authDomain: metaEnv.VITE_FIREBASE_AUTH_DOMAIN || `${metaEnv.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+    firestoreDatabaseId: metaEnv.VITE_FIREBASE_DATABASE_ID || "ai-studio-iptvsecure-557bbb75-14cd-45eb-b63e-ca2bab211260",
+    appId: metaEnv.VITE_FIREBASE_APP_ID || defaultFirebaseConfig.appId,
+  };
+}
+
 let db: any = null;
 try {
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-  if (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== "(default)") {
-    db = initializeFirestore(app, {}, firebaseConfig.firestoreDatabaseId);
+  const app = getApps().length === 0 ? initializeApp(activeConfig) : getApp();
+  const databaseId = activeConfig.firestoreDatabaseId || defaultFirebaseConfig.firestoreDatabaseId;
+  if (databaseId && databaseId !== "(default)") {
+    db = initializeFirestore(app, {}, databaseId);
   } else {
     db = getFirestore(app);
   }
+  console.log("Client-side Firestore connected to project:", activeConfig.projectId);
 } catch (err) {
   console.error("Failed to initialize Firebase client-side:", err);
 }
@@ -212,42 +242,12 @@ async function seedSuperusersClient() {
   }
 }
 
-// Check if running on Netlify/static host and apply interceptor
+// Smart API Interceptor that works seamlessly on both Server (Express) and Static Hosts (Netlify)
 export async function initApiInterceptor() {
-  const originalFetch = window.fetch;
-  let isClientOnlyMode = false;
+  const originalFetch = window.fetch.bind(window);
 
-  // Run a probe to check if the backend is responsive
-  try {
-    const testUrl = `${window.location.origin}/api/admin/login`;
-    const res = await originalFetch(testUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ check: true })
-    });
-    const text = await res.text();
-    // If the server-side route does not exist, Netlify/SPAs serve the index.html page (which starts with <!DOCTYPE)
-    if (text.trim().startsWith("<!DOCTYPE") || res.status === 404) {
-      isClientOnlyMode = true;
-    }
-  } catch (e) {
-    isClientOnlyMode = true;
-  }
-
-  // Force client mode if running on netlify.app directly
-  if (window.location.hostname.endsWith(".netlify.app")) {
-    isClientOnlyMode = true;
-  }
-
-  if (!isClientOnlyMode) {
-    console.log("Running in hybrid server-backed mode. Backend APIs are fully responsive.");
-    return;
-  }
-
-  console.warn("⚠️ NETLIFY STATIC MODE DETECTED: Activating client-side Firestore API Interceptor.");
-
-  // Intercept window.fetch globally
-  window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  // Custom fetch wrapper
+  const customFetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const urlString = typeof input === "string" ? input : (input instanceof URL ? input.href : input.url);
     
     // Resolve relative URL
@@ -261,6 +261,27 @@ export async function initApiInterceptor() {
 
     if (!path.startsWith("/api/")) {
       return originalFetch(input, init);
+    }
+
+    // Attempt to call original backend first if running full-stack
+    try {
+      const res = await originalFetch(input, init);
+      const contentType = res.headers.get("content-type") || "";
+      
+      // If the backend responds with valid JSON and HTTP OK (200-299), return it directly
+      if (res.ok && contentType.includes("application/json")) {
+        return res;
+      }
+
+      // Check if response is HTML (e.g. Netlify 404/200 SPA rewrite serving index.html)
+      const cloned = res.clone();
+      const text = await cloned.text();
+      if (!text.trim().startsWith("<") && res.ok && !contentType.includes("text/html")) {
+        return res;
+      }
+      // If it returned HTML or non-OK on a static host, fall through to client-side Firestore execution!
+    } catch (netErr) {
+      // Server unavailable, fall through to client-side execution
     }
 
     // Helper to return JSON Response
@@ -994,6 +1015,73 @@ export async function initApiInterceptor() {
         return jsonResponse({ success: true, message: `Statut du ticket mis à jour à "${status}".` });
       }
 
+      // --- ENDPOINT: GET /api/admin/logs ---
+      if (path === "/api/admin/logs" && init?.method === "GET") {
+        let logs: any[] = [];
+        let fetchedFromFirestore = false;
+
+        if (db) {
+          try {
+            const logsSnap = await getDocs(collection(db, "audit_logs"));
+            logsSnap.forEach((docSnap) => {
+              logs.push({
+                id: docSnap.id,
+                ...docSnap.data()
+              });
+            });
+            logs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            fetchedFromFirestore = true;
+          } catch (err) {
+            console.warn("Firestore fetch logs failed:", err);
+          }
+        }
+
+        if (!fetchedFromFirestore) {
+          logs = ClientLocalDB.get("audit_logs");
+        }
+
+        return jsonResponse(logs);
+      }
+
+      // --- ENDPOINT: POST /api/admin/login ---
+      if (path === "/api/admin/login" && init?.method === "POST") {
+        const { password } = body;
+        if (!password) {
+          return jsonResponse({ error: "Mot de passe requis" }, 400);
+        }
+
+        // Check against superuser dwayne or hermann
+        let isAuthSuccess = false;
+        if (db) {
+          try {
+            const dwayneRef = doc(db, "admin_users", "dwayne");
+            const dwayneSnap = await getDoc(dwayneRef);
+            if (dwayneSnap.exists()) {
+              const data = dwayneSnap.data();
+              if (bcrypt.compareSync(password, data.passwordHash)) {
+                isAuthSuccess = true;
+              }
+            }
+          } catch (err) {
+            console.warn("Firestore admin login check failed:", err);
+          }
+        }
+
+        if (!isAuthSuccess) {
+          const localAdmins = ClientLocalDB.get("admin_users");
+          const matched = localAdmins.find(a => bcrypt.compareSync(password, a.passwordHash));
+          if (matched) {
+            isAuthSuccess = true;
+          }
+        }
+
+        if (isAuthSuccess) {
+          return jsonResponse({ success: true, message: "Authentification admin réussie" });
+        } else {
+          return jsonResponse({ error: "Mot de passe admin invalide" }, 401);
+        }
+      }
+
       // Fallback for unhandled API endpoints
       return jsonResponse({ error: "Endpoint non trouvé en mode client" }, 404);
     } catch (err: any) {
@@ -1001,4 +1089,18 @@ export async function initApiInterceptor() {
       return jsonResponse({ error: err.message || "Erreur d'interception client" }, 500);
     }
   };
+
+  try {
+    Object.defineProperty(window, "fetch", {
+      value: customFetch,
+      writable: true,
+      configurable: true,
+    });
+  } catch (err) {
+    try {
+      (window as any).fetch = customFetch;
+    } catch (err2) {
+      console.error("Impossible d'intercepter window.fetch:", err2);
+    }
+  }
 }
