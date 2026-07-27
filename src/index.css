@@ -1,1 +1,64 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #0b0f19;
+    --text-primary: #f8fafc;
+  }
+
+  html.light {
+    --bg-primary: #fcfbf8;
+    --text-primary: #1e293b;
+    color-scheme: light;
+  }
+
+  html.dark {
+    --bg-primary: #0b0f19;
+    --text-primary: #f8fafc;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom warm scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.6);
+}
+
+/* Slow spin animation for sun icon */
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 12s linear infinite;
+}

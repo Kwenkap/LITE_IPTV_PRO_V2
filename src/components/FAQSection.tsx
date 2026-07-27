@@ -43,16 +43,33 @@ export default function FAQSection() {
     }
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqData.map((item) => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer
+      }
+    }))
+  };
+
   return (
-    <div className="w-full mt-12 mb-6" id="faq-section-container">
+    <section className="w-full mt-12 mb-6" id="faq-section-container" aria-label="Foire aux questions Power IPTV">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-400 mb-3 font-mono">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Foire Aux Questions</span>
         </div>
-        <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-          Questions Fréquentes & Support
-        </h3>
+        <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+          Questions Fréquentes & Support <span className="text-amber-400 font-extrabold">Power IPTV</span>
+        </h2>
         <p className="text-xs text-slate-400 mt-1.5 max-w-lg mx-auto">
           Tout ce que vous devez savoir pour profiter au mieux de votre expérience de streaming Ultra HD sans interruption.
         </p>
@@ -64,7 +81,7 @@ export default function FAQSection() {
           return (
             <div
               key={item.id}
-              className="bg-slate-900/40 backdrop-blur-md rounded-xl border border-slate-800/80 hover:border-slate-700/80 overflow-hidden transition-all duration-300"
+              className="bg-[#0f1422] rounded-xl border border-slate-800 hover:border-slate-700 overflow-hidden transition-colors"
               id={`faq-item-${item.id}`}
             >
               <button
@@ -108,6 +125,6 @@ export default function FAQSection() {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

@@ -294,8 +294,22 @@ async function seedInitialDataClient() {
   }
 }
 
+let isDataSeeded = false;
+async function ensureDataSeededOnce() {
+  if (isDataSeeded) return;
+  isDataSeeded = true;
+  try {
+    await seedInitialDataClient();
+  } catch (e) {
+    console.warn("Initial data seed error:", e);
+  }
+}
+
 // Smart API Interceptor that works seamlessly on both Server (Express) and Static Hosts (Netlify)
 export async function initApiInterceptor() {
+  // Trigger initial seed asynchronously once on startup
+  ensureDataSeededOnce();
+
   const originalFetch = window.fetch.bind(window);
 
   // Custom fetch wrapper
@@ -373,8 +387,8 @@ export async function initApiInterceptor() {
     const cleanPath = path.split("?")[0];
 
     try {
-      // Ensure superusers and initial data are seeded
-      await seedInitialDataClient();
+      // Ensure superusers and initial data are seeded once
+      await ensureDataSeededOnce();
 
       // --- ENDPOINT: POST /api/support/ticket ---
       if (cleanPath === "/api/support/ticket" && reqMethod === "POST") {

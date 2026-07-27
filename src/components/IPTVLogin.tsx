@@ -5,6 +5,8 @@ import {
   ShoppingCart, Sparkles, ArrowRight, ShieldCheck, Compass 
 } from "lucide-react";
 import FAQSection from "./FAQSection";
+import SEOContentSection from "./SEOContentSection";
+import { useLanguage } from "../lib/i18n";
 
 // Simple robust obfuscation/encryption for local storage
 export function encryptCredentials(text: string): string {
@@ -31,40 +33,47 @@ interface IPTVLoginProps {
 }
 
 export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlayStream, initialError }: IPTVLoginProps) {
+  const { t, theme } = useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(true);
   const [error, setError] = useState(initialError || "");
   const [rememberMe, setRememberMe] = useState(false);
   const [rememberedUser, setRememberedUser] = useState<{ username: string; expiresAt: number } | null>(null);
 
-  // Load remembered credentials on mount
+  // Load remembered credentials on mount with skeleton feedback
   useEffect(() => {
-    const stored = localStorage.getItem("iptv_remembered_credentials");
-    if (stored) {
-      try {
-        const { u, p } = JSON.parse(stored);
-        const decUsername = decryptCredentials(u);
-        const decPassword = decryptCredentials(p);
-        if (decUsername && decPassword) {
-          setUsername(decUsername);
-          setPassword(decPassword);
-          setRememberMe(true);
+    const timer = setTimeout(() => {
+      const stored = localStorage.getItem("iptv_remembered_credentials");
+      if (stored) {
+        try {
+          const { u, p } = JSON.parse(stored);
+          const decUsername = decryptCredentials(u);
+          const decPassword = decryptCredentials(p);
+          if (decUsername && decPassword) {
+            setUsername(decUsername);
+            setPassword(decPassword);
+            setRememberMe(true);
 
-          // Get last session info if matches
-          const lastSession = localStorage.getItem("iptv_last_session_info");
-          if (lastSession) {
-            const parsedSession = JSON.parse(lastSession);
-            if (parsedSession.username.toLowerCase() === decUsername.toLowerCase()) {
-              setRememberedUser(parsedSession);
+            // Get last session info if matches
+            const lastSession = localStorage.getItem("iptv_last_session_info");
+            if (lastSession) {
+              const parsedSession = JSON.parse(lastSession);
+              if (parsedSession.username.toLowerCase() === decUsername.toLowerCase()) {
+                setRememberedUser(parsedSession);
+              }
             }
           }
+        } catch (e) {
+          console.error("Erreur lors de la lecture des identifiants mémorisés :", e);
         }
-      } catch (e) {
-        console.error("Erreur lors de la lecture des identifiants mémorisés :", e);
       }
-    }
+      setIsCheckingStoredSession(false);
+    }, 450);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
     const loginPass = customPass || password;
 
     if (!loginUser.trim() || !loginPass.trim()) {
-      setError("Veuillez saisir votre nom d'utilisateur et votre mot de passe.");
+      setError(t("password_label") + " / " + t("username_label") + " required");
       return;
     }
 
@@ -169,40 +178,33 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
     <div className="w-full max-w-6xl px-4" id="iptv-login-container">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         
-        {/* BLOCK 1: Connection / Login Form - SHOWN FIRST ON MOBILE (order-1) */}
+        {/* BLOCK 1: Connection / Login Form */}
         <div className="order-1 lg:order-2 lg:col-start-8 lg:col-span-5 lg:row-start-1 lg:row-end-3 w-full max-w-md mx-auto">
           
-          <motion.div
-            initial={{ opacity: 0, x: 20, y: 0 }}
-            animate={{ 
-              opacity: 1, 
-              x: 0,
-              y: [0, -6, 0]
-            }}
-            transition={{ 
-              opacity: { duration: 0.6 },
-              x: { duration: 0.6 },
-              y: { 
-                duration: 5, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              } 
-            }}
-            className="relative bg-slate-900/85 backdrop-blur-xl rounded-2xl border border-slate-800/80 p-8 shadow-2xl overflow-hidden shadow-violet-500/5 hover:border-slate-700/80 transition-colors"
+          <div
+            className={`relative rounded-2xl p-6 sm:p-8 shadow-2xl overflow-hidden border transition-colors ${
+              theme === "dark"
+                ? "bg-[#0d121f] border-slate-800 shadow-amber-950/20"
+                : "bg-white border-amber-200 shadow-amber-900/10 text-slate-900"
+            }`}
             id="login-card"
           >
             {/* Top glowing accent lines */}
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-500" />
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-amber-500 via-violet-500 to-amber-400" />
             
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center p-3 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 mb-4 shadow-inner">
-                <Tv2 className="w-8 h-8 text-violet-400" />
+              <div className={`inline-flex items-center justify-center p-3 rounded-2xl mb-4 shadow-inner ${
+                theme === "dark"
+                  ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                  : "bg-amber-100 border border-amber-200 text-amber-800"
+              }`}>
+                <Tv2 className="w-8 h-8 text-amber-500" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-white mb-2">
-                Connexion POWER IPTV
+              <h1 className={`text-2xl font-bold tracking-tight mb-2 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                {t("client_portal_title")}
               </h1>
-              <p className="text-sm text-slate-400">
-                Entrez vos identifiants pour lancer instantanément vos chaînes en direct
+              <p className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                {t("client_portal_sub")}
               </p>
             </div>
 
@@ -210,60 +212,120 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 text-rose-400 text-sm"
+                className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-500 text-sm"
                 id="login-error-alert"
               >
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold block mb-0.5">Erreur d'accès</span>
+                  <span className="font-semibold block mb-0.5">Erreur</span>
                   {error}
                 </div>
               </motion.div>
             )}
 
-            {rememberedUser && (
+            {/* SKELETON LOADER FOR REMEMBERED SESSION CHECK */}
+            {isCheckingStoredSession ? (
+              <div className="mb-5 p-4 rounded-xl border border-amber-500/20 bg-amber-950/10 space-y-3 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                    <div className="h-3.5 w-28 bg-slate-700/80 rounded" />
+                  </div>
+                  <div className="h-3.5 w-16 bg-slate-700/80 rounded" />
+                </div>
+                <div className="h-9 w-full bg-amber-500/20 rounded-xl" />
+              </div>
+            ) : rememberedUser ? (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-5 p-4 rounded-xl bg-violet-950/40 border border-violet-500/20 text-slate-300 text-xs space-y-3"
+                className={`mb-5 p-4 rounded-xl border text-xs space-y-3 ${
+                  theme === "dark"
+                    ? "bg-amber-950/20 border-amber-500/20 text-slate-300"
+                    : "bg-amber-50 border-amber-200 text-slate-800"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-bold text-white font-mono">{rememberedUser.username}</span>
+                    <span className="font-bold font-mono">{rememberedUser.username}</span>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                    {rememberedUser.expiresAt > Date.now() ? "Compte Mémorisé" : "Expiré"}
+                  <span className="text-[10px] text-amber-500 font-semibold uppercase tracking-wider">
+                    {rememberedUser.expiresAt > Date.now() ? "Mémorisé" : "Expiré"}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleQuickReconnect}
                   disabled={isLoading || isRedirecting}
-                  className="w-full py-2.5 px-3 bg-violet-600/90 hover:bg-violet-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-violet-950/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  className="w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-amber-500/10 disabled:opacity-50"
                   id="login-quick-reconnect-btn"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                  <span>Reconnexion Rapide</span>
+                  <span>{t("reconnect_button")}</span>
                 </button>
+              </motion.div>
+            ) : null}
+
+            {/* SUBSCRIPTION VERIFICATION SKELETON ON SUBMISSION */}
+            {(isLoading || isRedirecting) && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-4 rounded-xl bg-slate-950/90 border border-amber-500/30 space-y-3 mb-5 shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-400 flex items-center gap-2">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                    Vérification de l'abonnement IPTV...
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Serveur Sécurisé
+                  </span>
+                </div>
+
+                {/* Animated Skeleton Info Lines */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-slate-400">Authentification:</span>
+                    <div className="h-3 w-20 bg-amber-500/20 rounded animate-pulse" />
+                  </div>
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-slate-400">Contrôle d'Expiration:</span>
+                    <div className="h-3 w-28 bg-slate-800 rounded animate-pulse" />
+                  </div>
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-slate-400">Attribution Flux HLS:</span>
+                    <div className="h-3 w-24 bg-purple-500/20 rounded animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Shimmer progress bar */}
+                <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden mt-2 border border-slate-800">
+                  <div className="bg-gradient-to-r from-amber-500 via-fuchsia-500 to-cyan-400 h-full w-full animate-pulse" />
+                </div>
               </motion.div>
             )}
 
             <form onSubmit={(e) => handleSubmit(e)} className="space-y-5">
               <div>
-                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-                  Nom d'utilisateur
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                  {t("username_label")}
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <User className="w-5 h-5" />
                   </div>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all text-sm font-mono"
-                    placeholder="votre_username"
+                    className={`w-full pl-11 pr-4 py-3 rounded-xl border transition-all text-sm font-mono ${
+                      theme === "dark"
+                        ? "bg-[#090d16] border-slate-800 text-white placeholder-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:ring-1 focus:ring-amber-500"
+                    }`}
+                    placeholder={t("username_placeholder")}
                     required
                     disabled={isLoading || isRedirecting}
                     id="login-username-input"
@@ -273,19 +335,23 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                    Mot de passe
+                  <label className={`block text-xs font-semibold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                    {t("password_label")}
                   </label>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="w-5 h-5" />
                   </div>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all text-sm font-mono"
+                    className={`w-full pl-11 pr-4 py-3 rounded-xl border transition-all text-sm font-mono ${
+                      theme === "dark"
+                        ? "bg-[#090d16] border-slate-800 text-white placeholder-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:ring-1 focus:ring-amber-500"
+                    }`}
                     placeholder="••••••••••••"
                     required
                     disabled={isLoading || isRedirecting}
@@ -296,15 +362,15 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
               {/* Remember Me Checkbox */}
               <div className="flex items-center justify-between py-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-400 hover:text-slate-200">
+                <label className={`flex items-center gap-2 cursor-pointer select-none text-xs ${theme === "dark" ? "text-slate-400 hover:text-slate-200" : "text-slate-600 hover:text-slate-900"}`}>
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-800 bg-slate-950 text-violet-500 focus:ring-violet-500/50 w-4 h-4 cursor-pointer"
+                    className="rounded border-slate-400 bg-slate-900 text-amber-500 focus:ring-amber-500/50 w-4 h-4 cursor-pointer"
                     id="login-remember-me-checkbox"
                   />
-                  <span>Mémoriser mes identifiants</span>
+                  <span>{t("remember_me")}</span>
                 </label>
               </div>
 
@@ -313,61 +379,57 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                 whileTap={{ scale: isRedirecting ? 1 : 0.99 }}
                 type="submit"
                 disabled={isLoading || isRedirecting}
-                className="relative w-full py-3.5 px-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-amber-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-amber-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/20 focus:outline-none focus:ring-2 focus:ring-violet-500/50 disabled:opacity-50 transition-all overflow-hidden flex items-center justify-center gap-2 cursor-pointer"
+                className="relative w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-amber-600 to-violet-600 hover:from-amber-400 hover:to-violet-500 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-amber-500/20 focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-50 transition-all overflow-hidden flex items-center justify-center gap-2 cursor-pointer"
                 id="login-submit-button"
               >
                 {isRedirecting ? (
                   <>
-                    <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" />
-                    <span className="text-emerald-400">Connexion réussie ! Lancement...</span>
+                    <RefreshCw className="w-5 h-5 animate-spin text-slate-950" />
+                    <span>{t("launching_stream")}</span>
                   </>
                 ) : isLoading ? (
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span>Chargement de votre flux...</span>
+                    <span>{t("authenticating")}</span>
                   </>
                 ) : (
                   <>
-                    <Play className="w-5 h-5 text-white fill-white animate-pulse" />
-                    <span>Lancer mon flux TV</span>
+                    <Play className="w-5 h-5 text-slate-950 fill-slate-950" />
+                    <span>{t("connect_button")}</span>
                   </>
-                )
-              }
+                )}
               </motion.button>
             </form>
 
-          </motion.div>
+          </div>
 
         </div>
 
-        {/* BLOCK 2: Marketplace Special Offer - SHOWN SECOND ON MOBILE (order-2) */}
+        {/* BLOCK 2: Marketplace Special Offer */}
         <div className="order-2 lg:order-1 lg:col-start-1 lg:col-span-7 lg:row-start-1">
           
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="relative bg-gradient-to-r from-violet-950/40 via-fuchsia-950/30 to-slate-900/80 backdrop-blur-xl rounded-2xl border border-violet-500/30 p-6 shadow-xl overflow-hidden group"
+          <div 
+            className={`relative rounded-2xl border p-6 shadow-xl overflow-hidden group ${
+              theme === "dark"
+                ? "bg-gradient-to-r from-amber-950/30 via-slate-900 to-slate-900 border-amber-500/30"
+                : "bg-gradient-to-r from-amber-100 via-amber-50 to-white border-amber-300 shadow-amber-100"
+            }`}
           >
-            {/* Pulsing light behind banner */}
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-violet-500/10 blur-2xl group-hover:bg-violet-500/20 transition-all duration-500" />
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-500" />
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-amber-500 via-violet-500 to-amber-400" />
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
               <div className="space-y-1">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold uppercase tracking-wider">
-                  🛒 Offre Spéciale
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider">
+                  🛒 {t("marketplace_banner_title")}
                 </span>
-                <h3 className="text-lg font-bold text-white mt-1">
-                  Pas encore d'abonnement actif ?
+                <h3 className={`text-lg font-bold mt-1 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                  {t("marketplace_banner_title")}
                 </h3>
-                <p className="text-xs text-slate-300">
-                  Achetez vos accès instantanés 12 ou 24 mois sur notre Marketplace Partenaire au meilleur prix du marché.
+                <p className={`text-xs ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
+                  {t("marketplace_banner_desc")}
                 </p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(245, 158, 11, 0.4)" }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 type="button"
                 onClick={() => {
                   if (onNavigateToStore) {
@@ -376,187 +438,145 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                     window.location.href = "/store";
                   }
                 }}
-                className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/10"
+                className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 focus:ring-2 focus:ring-amber-400 text-slate-950 text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20"
               >
                 <ShoppingCart className="w-4 h-4 text-slate-950" />
-                <span>Acheter un abonnement</span>
+                <span>{t("buy_now")}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-950" />
-              </motion.button>
+              </button>
             </div>
-          </motion.div>
+          </div>
 
         </div>
 
-        {/* BLOCK 3: TV Experience - SHOWN THIRD ON MOBILE (order-3) */}
+        {/* BLOCK 3: TV Experience Features & Quality Badges */}
         <div className="order-3 lg:order-1 lg:col-start-1 lg:col-span-7 lg:row-start-2">
           
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-800/80 p-6 space-y-6"
+          <div
+            className={`rounded-2xl border p-6 space-y-6 ${
+              theme === "dark"
+                ? "bg-[#0e1320] border-slate-800"
+                : "bg-white border-slate-200 shadow-sm"
+            }`}
           >
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-violet-400" />
-                L'expérience TV en Ultra Haute Définition
+              <h2 className={`text-xl font-bold flex items-center gap-2 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                {t("quality_badge")}
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Profitez d'un accès illimité à plus de 20 000 chaînes internationales et VOD à la demande.
+              <p className={`text-xs mt-1 ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                {t("tagline")}
               </p>
             </div>
 
-            {/* Simulated TV / Channel preview images and Badges */}
+            {/* TV Channels & VOD preview cards (Vector gradient based - 0ms download time) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
-              {/* Card 1: Sports & Channels */}
-              <motion.div 
-                whileHover={{ y: -5, scale: 1.02, borderColor: "rgba(139, 92, 246, 0.4)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950/80 group h-36 cursor-pointer"
+              {/* Card 1: Live Sports */}
+              <div 
+                className={`relative rounded-xl overflow-hidden border p-4 h-36 flex flex-col justify-between group cursor-pointer transition-colors ${
+                  theme === "dark" 
+                    ? "border-rose-500/20 bg-gradient-to-br from-rose-950/40 via-slate-900 to-slate-950 hover:border-rose-500/40" 
+                    : "border-rose-200 bg-gradient-to-br from-rose-50 via-white to-slate-50 hover:border-rose-300"
+                }`}
               >
-                <img 
-                  src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80" 
-                  alt="Sports Live"
-                  className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 group-hover:opacity-50 transition-all duration-500"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3 space-y-1">
+                <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-widest shadow-md">
                     ⚽ LIVE SPORT
                   </span>
+                  <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+                    <Tv2 className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-white">Canal+, beIN Sports, DAZN, RMC</h4>
                   <p className="text-[10px] text-slate-300">Ligue des Champions, Premier League, F1, UFC.</p>
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Card 2: Entertainment & Movies */}
-              <motion.div 
-                whileHover={{ y: -5, scale: 1.02, borderColor: "rgba(236, 72, 153, 0.4)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950/80 group h-36 cursor-pointer"
+              {/* Card 2: Cinema & VOD */}
+              <div 
+                className={`relative rounded-xl overflow-hidden border p-4 h-36 flex flex-col justify-between group cursor-pointer transition-colors ${
+                  theme === "dark" 
+                    ? "border-amber-500/20 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 hover:border-amber-500/40" 
+                    : "border-amber-200 bg-gradient-to-br from-amber-50 via-white to-slate-50 hover:border-amber-300"
+                }`}
               >
-                <img 
-                  src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=400&q=80" 
-                  alt="Movies VOD"
-                  className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 group-hover:opacity-50 transition-all duration-500"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3 space-y-1">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-violet-600 text-white text-[9px] font-extrabold uppercase tracking-widest shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 text-slate-950 text-[9px] font-extrabold uppercase tracking-widest shadow-md">
                     🎬 CINÉMA & VOD
                   </span>
+                  <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-white">Netflix, Disney+, Prime, Canal+</h4>
                   <p className="text-[10px] text-slate-300">Derniers blockbusters et séries exclusives.</p>
                 </div>
-              </motion.div>
+              </div>
 
             </div>
 
-            {/* Channels Showcase & Badges */}
+            {/* Channels Showcase */}
             <div className="space-y-2.5">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <span className={`text-[10px] font-bold uppercase tracking-wider block ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
                 Bouquets premium inclus & compatibles
               </span>
-              <motion.div 
-                variants={{
-                  hidden: { opacity: 0 },
-                  show: {
-                    opacity: 1,
-                    transition: { staggerChildren: 0.08 }
-                  }
-                }}
-                initial="hidden"
-                animate="show"
-                className="flex flex-wrap gap-2"
-              >
-                {/* Canal+ Styled badge */}
-                <motion.span 
-                  variants={{ hidden: { opacity: 0, scale: 0.8 }, show: { opacity: 1, scale: 1 } }}
-                  whileHover={{ scale: 1.08, y: -2, boxShadow: "0 4px 12px rgba(255,255,255,0.15)" }}
-                  className="px-3 py-1 bg-white text-black font-extrabold text-[10px] rounded tracking-tighter border border-slate-200 shadow-sm uppercase flex items-center gap-1 select-none cursor-default transition-all"
-                >
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-white text-black font-extrabold text-[10px] rounded tracking-tighter border border-slate-200 shadow-sm uppercase flex items-center gap-1 select-none">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
                   CANAL+
-                </motion.span>
-                {/* beIN Sports Styled badge */}
-                <motion.span 
-                  variants={{ hidden: { opacity: 0, scale: 0.8 }, show: { opacity: 1, scale: 1 } }}
-                  whileHover={{ scale: 1.08, y: -2, boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)" }}
-                  className="px-3 py-1 bg-indigo-950 text-indigo-300 font-extrabold text-[10px] rounded tracking-wide border border-indigo-900 shadow-sm flex items-center gap-1 select-none cursor-default transition-all"
-                >
+                </span>
+                <span className="px-3 py-1 bg-indigo-950 text-indigo-300 font-extrabold text-[10px] rounded tracking-wide border border-indigo-900 shadow-sm flex items-center gap-1 select-none">
                   beIN SPORTS
-                </motion.span>
-                {/* RMC Sport Styled badge */}
-                <motion.span 
-                  variants={{ hidden: { opacity: 0, scale: 0.8 }, show: { opacity: 1, scale: 1 } }}
-                  whileHover={{ scale: 1.08, y: -2, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.25)" }}
-                  className="px-3 py-1 bg-slate-950 text-red-500 font-bold text-[10px] rounded border border-red-900/30 flex items-center gap-1 select-none cursor-default transition-all"
-                >
+                </span>
+                <span className="px-3 py-1 bg-zinc-900 text-red-500 font-bold text-[10px] rounded border border-red-900/30 flex items-center gap-1 select-none">
                   <span className="text-slate-400">RMC</span> SPORT
-                </motion.span>
-                {/* DAZN Styled badge */}
-                <motion.span 
-                  variants={{ hidden: { opacity: 0, scale: 0.8 }, show: { opacity: 1, scale: 1 } }}
-                  whileHover={{ scale: 1.08, y: -2, boxShadow: "0 4px 12px rgba(6, 182, 212, 0.25)" }}
-                  className="px-3 py-1 bg-zinc-900 text-cyan-400 font-black text-[10px] rounded border border-cyan-500/20 flex items-center gap-1 select-none cursor-default transition-all"
-                >
+                </span>
+                <span className="px-3 py-1 bg-zinc-900 text-amber-400 font-black text-[10px] rounded border border-amber-500/20 flex items-center gap-1 select-none">
                   DAZN
-                </motion.span>
-                {/* TF1/M6 UHD styled */}
-                <motion.span 
-                  variants={{ hidden: { opacity: 0, scale: 0.8 }, show: { opacity: 1, scale: 1 } }}
-                  whileHover={{ scale: 1.08, y: -2, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)" }}
-                  className="px-3 py-1 bg-slate-950 text-emerald-400 font-bold text-[10px] rounded border border-emerald-500/10 select-none cursor-default transition-all"
-                >
+                </span>
+                <span className="px-3 py-1 bg-emerald-950/80 text-emerald-400 font-bold text-[10px] rounded border border-emerald-500/20 select-none">
                   TNT FRANCE & INT.
-                </motion.span>
-              </motion.div>
+                </span>
+              </div>
             </div>
 
             {/* Key Quality Indicators */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-800/60">
-              <motion.div 
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="text-center space-y-1 cursor-default group"
-              >
-                <div className="text-violet-400 text-sm font-bold flex items-center justify-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-violet-400 group-hover:rotate-12 transition-transform duration-300" />
+            <div className={`grid grid-cols-3 gap-3 pt-4 border-t ${theme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
+              <div className="text-center space-y-1">
+                <div className="text-amber-500 text-sm font-bold flex items-center justify-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>4K UHD</span>
                 </div>
-                <p className="text-[9px] text-slate-500 leading-tight transition-colors group-hover:text-slate-400">Fidélité visuelle maximale</p>
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="text-center space-y-1 border-x border-slate-800/60 cursor-default group"
-              >
-                <div className="text-emerald-400 text-sm font-bold flex items-center justify-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                <p className={`text-[9px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>{t("feature_quality")}</p>
+              </div>
+              <div className={`text-center space-y-1 border-x ${theme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
+                <div className="text-emerald-500 text-sm font-bold flex items-center justify-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                   <span>99.9%</span>
                 </div>
-                <p className="text-[9px] text-slate-500 leading-tight transition-colors group-hover:text-slate-400">Serveurs anti-coupures</p>
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="text-center space-y-1 cursor-default group"
-              >
-                <div className="text-amber-400 text-sm font-bold flex items-center justify-center gap-1">
-                  <Compass className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-[360deg] transition-transform duration-1000" />
+                <p className={`text-[9px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>{t("feature_stable")}</p>
+              </div>
+              <div className="text-center space-y-1">
+                <div className="text-amber-500 text-sm font-bold flex items-center justify-center gap-1">
+                  <Compass className="w-3.5 h-3.5 text-amber-500" />
                   <span>Multi-D.</span>
                 </div>
-                <p className="text-[9px] text-slate-500 leading-tight transition-colors group-hover:text-slate-400">SmartTV, Smartphone, Box</p>
-              </motion.div>
+                <p className={`text-[9px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>{t("feature_secure")}</p>
+              </div>
             </div>
 
-          </motion.div>
+          </div>
 
         </div>
 
       </div>
       
       <FAQSection />
+      <SEOContentSection />
     </div>
   );
 }
+

@@ -4,9 +4,12 @@ import {
   Tv, Sparkles, Shield, Zap, Search, ShoppingBag, Check, Plus, Minus, Trash2, 
   X, Star, Lock, MessageSquare, Headphones, ShieldCheck, Palette, Bot, 
   FileText, TrendingUp, Share2, Users, PlayCircle, Film, ChevronRight,
-  CreditCard, Smartphone, CheckCircle, ArrowRight, ArrowLeft, Home, ExternalLink, HelpCircle, Flame
+  CreditCard, Smartphone, CheckCircle, ArrowRight, ArrowLeft, Home, ExternalLink, HelpCircle, Flame, Globe
 } from "lucide-react";
 import { DigitalProduct, CartItem, ProductCategory } from "../types/store";
+import { useLanguage } from "../lib/i18n";
+import { COUNTRIES, detectUserCountry, getProductPriceForRegion, getOriginalPriceForRegion, formatPriceValue, CountryInfo } from "../lib/regionalPricing";
+import SEOContentSection from "./SEOContentSection";
 
 interface DigitalStoreProps {
   onNavigateToIPTV: () => void;
@@ -14,9 +17,15 @@ interface DigitalStoreProps {
 }
 
 export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: DigitalStoreProps) {
+  const { t, theme } = useLanguage();
   const [products, setProducts] = useState<DigitalProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   
+  // Regional Pricing & Country State
+  const [selectedCountry, setSelectedCountry] = useState<CountryInfo>(() => detectUserCountry());
+  const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
+
   // Search and Category filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<"all" | ProductCategory>("all");
@@ -119,9 +128,10 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       }
       return [...prev, { product, quantity: 1 }];
     });
+    const priceVal = getProductPriceForRegion(product, selectedCountry.region);
     addToast(
       "Produit ajouté au panier !",
-      `${product.title} — ${product.price.toFixed(2)} €`,
+      `${product.title} — ${formatPriceValue(priceVal, selectedCountry.currencySymbol, selectedCountry.currency)}`,
       "success"
     );
     setIsCartOpen(true);
@@ -150,8 +160,11 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
     setCart(prev => prev.filter(item => item.product.id !== productId));
   };
 
-  // Total cart amount calculation
-  const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  // Total cart amount calculation based on detected region
+  const cartTotal = cart.reduce((sum, item) => {
+    const p = getProductPriceForRegion(item.product, selectedCountry.region);
+    return sum + p * item.quantity;
+  }, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Submit Checkout
@@ -180,7 +193,10 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           customerPhone,
           paymentMethod,
           items: cart,
-          totalAmount: cartTotal
+          totalAmount: cartTotal,
+          currency: selectedCountry.currency,
+          currencySymbol: selectedCountry.symbol,
+          regionCode: selectedCountry.region
         })
       });
 
@@ -224,31 +240,46 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       </div>
 
       {/* STICKY GLASSMORPHISM NAVBAR */}
-      <header className="sticky top-0 z-40 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-[#09090b]/85 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
           
           {/* Button to Home / Accueil */}
           <button
             onClick={onNavigateToIPTV}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold hover:text-white transition-all cursor-pointer shadow-sm"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold hover:text-white transition-all cursor-pointer shadow-sm"
           >
             <Home className="w-4 h-4 text-cyan-400" />
-            <span>Accueil</span>
+            <span className="hidden sm:inline">Accueil</span>
           </button>
 
-          {/* Shopping Cart Button */}
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="relative group p-2.5 rounded-xl bg-gradient-to-r from-purple-600/20 to-cyan-500/20 border border-purple-500/30 hover:border-cyan-400/50 text-white transition-all shadow-lg shadow-purple-500/10 flex items-center gap-2 cursor-pointer"
-          >
-            <ShoppingBag className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold">Panier</span>
-            {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-mono text-[10px] font-bold flex items-center justify-center animate-bounce shadow-md">
-                {cartCount}
-              </span>
-            )}
-          </button>
+          {/* Right Controls: Country Selector + Shopping Cart Button */}
+          <div className="flex items-center gap-2.5">
+            {/* Country & Currency Detection Button */}
+            <button
+              onClick={() => setIsCountryModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 text-slate-200 text-xs font-medium cursor-pointer transition-all shadow-sm group"
+              title="Changer de pays / devise"
+            >
+              <span className="text-base">{selectedCountry.flag}</span>
+              <span className="hidden md:inline font-semibold">{selectedCountry.name}</span>
+              <span className="text-cyan-400 font-mono font-bold">({selectedCountry.symbol})</span>
+              <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400 transition-colors" />
+            </button>
+
+            {/* Shopping Cart Button */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative group p-2.5 rounded-xl bg-gradient-to-r from-purple-600/20 to-cyan-500/20 border border-purple-500/30 hover:border-cyan-400/50 text-white transition-all shadow-lg shadow-purple-500/10 flex items-center gap-2 cursor-pointer"
+            >
+              <ShoppingBag className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-semibold hidden sm:inline">Panier</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-mono text-[10px] font-bold flex items-center justify-center animate-bounce shadow-md">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
 
         </div>
       </header>
@@ -491,9 +522,70 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
         {/* PRODUCTS GRID */}
         {loadingProducts ? (
-          <div className="py-20 text-center">
-            <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-slate-400 text-sm">Chargement du catalogue...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div 
+                key={index}
+                className="rounded-2xl bg-[#0d0d12] border border-white/10 p-5 flex flex-col justify-between shadow-xl animate-pulse relative overflow-hidden"
+              >
+                {/* Shimmer gradient effect */}
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.03] to-transparent animate-[shimmer_2s_infinite]" />
+
+                <div>
+                  {/* Top Header: Badge & Stock Skeletons */}
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="h-5 w-24 bg-slate-800/80 rounded-full" />
+                    <div className="h-5 w-20 bg-slate-800/80 rounded-full" />
+                  </div>
+
+                  {/* Title & Icon Skeleton */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-slate-800/80 shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 w-3/4 bg-slate-800/80 rounded" />
+                      <div className="h-3 w-1/2 bg-slate-800/50 rounded" />
+                    </div>
+                  </div>
+
+                  {/* Description Skeleton */}
+                  <div className="space-y-2 mb-4">
+                    <div className="h-3 w-full bg-slate-800/60 rounded" />
+                    <div className="h-3 w-4/5 bg-slate-800/60 rounded" />
+                  </div>
+
+                  {/* Features List Skeleton */}
+                  <div className="space-y-2 mb-5 border-t border-white/5 pt-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3.5 h-3.5 bg-slate-800/80 rounded-full shrink-0" />
+                      <div className="h-2.5 w-32 bg-slate-800/60 rounded" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3.5 h-3.5 bg-slate-800/80 rounded-full shrink-0" />
+                      <div className="h-2.5 w-28 bg-slate-800/60 rounded" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3.5 h-3.5 bg-slate-800/80 rounded-full shrink-0" />
+                      <div className="h-2.5 w-36 bg-slate-800/60 rounded" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Price & Buttons Skeleton */}
+                <div className="pt-3 border-t border-white/5 mt-auto">
+                  <div className="flex items-baseline justify-between mb-4">
+                    <div className="space-y-1">
+                      <div className="h-2.5 w-16 bg-slate-800/50 rounded" />
+                      <div className="h-6 w-24 bg-slate-800/80 rounded" />
+                    </div>
+                    <div className="h-4 w-16 bg-slate-800/50 rounded-full" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-9 bg-slate-800/80 rounded-xl" />
+                    <div className="h-9 bg-purple-900/40 border border-purple-500/20 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="py-16 text-center bg-[#0d0d12]/50 rounded-2xl border border-white/5 p-8">
@@ -606,20 +698,31 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                 <div className="pt-3 border-t border-white/5 mt-auto">
                   <div className="flex items-baseline justify-between mb-4">
                     <div>
-                      <span className="text-xs text-slate-500 font-mono">Prix promo</span>
+                      <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                        <span>{selectedCountry.flag}</span>
+                        <span>Tarif {selectedCountry.name}</span>
+                      </span>
                       <div className="flex items-baseline gap-2">
                         <span className="text-xl font-black text-white font-display">
-                          {product.price.toFixed(2)} €
+                          {formatPriceValue(
+                            getProductPriceForRegion(product, selectedCountry.region),
+                            selectedCountry.currencySymbol,
+                            selectedCountry.currency
+                          )}
                         </span>
-                        {product.originalPrice && (
+                        {getOriginalPriceForRegion(product, selectedCountry.region) && (
                           <span className="text-xs text-slate-500 line-through font-mono">
-                            {product.originalPrice.toFixed(2)} €
+                            {formatPriceValue(
+                              getOriginalPriceForRegion(product, selectedCountry.region)!,
+                              selectedCountry.currencySymbol,
+                              selectedCountry.currency
+                            )}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                       Livraison 5 min
                     </span>
                   </div>
@@ -831,7 +934,11 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                                 <h4 className="text-xs font-bold text-white truncate">{item.product.title}</h4>
                                 <p className="text-[10px] text-cyan-400 font-mono">{item.product.durationOrType}</p>
                                 <p className="text-xs font-bold text-purple-300 mt-0.5">
-                                  {(item.product.price * item.quantity).toFixed(2)} €
+                                  {formatPriceValue(
+                                    getProductPriceForRegion(item.product, selectedCountry.region) * item.quantity,
+                                    selectedCountry.currencySymbol,
+                                    selectedCountry.currency
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -966,7 +1073,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                     <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 text-left text-xs space-y-2">
                       <p className="text-slate-400">📩 <strong className="text-white">Email:</strong> {completedOrder.customerEmail}</p>
                       <p className="text-slate-400">📱 <strong className="text-white">WhatsApp:</strong> {completedOrder.customerPhone}</p>
-                      <p className="text-slate-400">💳 <strong className="text-white">Total réglé:</strong> {completedOrder.totalAmount.toFixed(2)} €</p>
+                      <p className="text-slate-400">💳 <strong className="text-white">Total réglé:</strong> {formatPriceValue(completedOrder.totalAmount, completedOrder.currencySymbol || selectedCountry.currencySymbol, completedOrder.currency || selectedCountry.currency)}</p>
                     </div>
                     <p className="text-[11px] text-amber-400 font-mono">
                       Vos identifiants et accès vous sont transmis par WhatsApp sous quelques minutes.
@@ -990,29 +1097,31 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                 <div className="p-5 border-t border-white/10 bg-[#09090b] space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-400">Total à payer</span>
-                    <span className="text-xl font-black text-white font-display">{cartTotal.toFixed(2)} €</span>
+                    <span className="text-xl font-black text-white font-display">
+                      {formatPriceValue(cartTotal, selectedCountry.currencySymbol, selectedCountry.currency)}
+                    </span>
                   </div>
 
                   {checkoutStep === "cart" ? (
                     <button
                       onClick={() => setCheckoutStep("form")}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-cyan-400 text-white font-bold text-xs shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 hover:opacity-95 transition-all"
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-cyan-400 text-white font-bold text-xs shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 hover:opacity-95 transition-all cursor-pointer"
                     >
-                      Passer la commande ({cartTotal.toFixed(2)} €)
+                      Passer la commande ({formatPriceValue(cartTotal, selectedCountry.currencySymbol, selectedCountry.currency)})
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   ) : (
                     <button
                       onClick={handleCheckoutSubmit}
                       disabled={isSubmitting}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 hover:opacity-95 transition-all disabled:opacity-50"
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          Confirmer & Payer ({cartTotal.toFixed(2)} €)
+                          Confirmer & Payer ({formatPriceValue(cartTotal, selectedCountry.currencySymbol, selectedCountry.currency)})
                         </>
                       )}
                     </button>
@@ -1024,6 +1133,99 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           </div>
         )}
       </AnimatePresence>
+
+      {/* COUNTRY & CURRENCY SELECTION MODAL */}
+      <AnimatePresence>
+        {isCountryModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-lg bg-[#0d0d12] border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <h3 className="font-bold text-white text-base font-display">Pays & Devise de la Boutique</h3>
+                    <p className="text-[11px] text-slate-400">
+                      Détection automatique : <span className="text-cyan-300 font-semibold">{selectedCountry.flag} {selectedCountry.name} ({selectedCountry.symbol})</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsCountryModalOpen(false)}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Country Search */}
+              <div className="relative mb-4">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un pays (France, USA, Côte d'Ivoire, Sénégal...)..."
+                  value={countrySearchQuery}
+                  onChange={(e) => setCountrySearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              {/* Country Grid */}
+              <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
+                {COUNTRIES
+                  .filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.currency.toLowerCase().includes(countrySearchQuery.toLowerCase()))
+                  .map(country => (
+                    <button
+                      key={country.code}
+                      onClick={() => {
+                        setSelectedCountry(country);
+                        localStorage.setItem("user_selected_country", country.code);
+                        setIsCountryModalOpen(false);
+                        addToast(
+                          "Pays mis à jour !",
+                          `Boutique adaptée pour ${country.flag} ${country.name} (${country.symbol})`,
+                          "info"
+                        );
+                      }}
+                      className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        selectedCountry.code === country.code
+                          ? "bg-purple-600/20 border-purple-500 text-white font-bold"
+                          : "bg-white/[0.02] border-white/5 hover:border-white/20 text-slate-300 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{country.flag}</span>
+                        <div>
+                          <p className="text-xs font-semibold">{country.name}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">Région : {country.region.toUpperCase()}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                        {country.currency} ({country.symbol})
+                      </span>
+                    </button>
+                  ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/10 text-center">
+                <button
+                  onClick={() => setIsCountryModalOpen(false)}
+                  className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl hover:text-white transition-all cursor-pointer"
+                >
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* SEO SECTION FOR SEARCH ENGINE INDEXING & HIGH KEYWORD DENSITY */}
+      <SEOContentSection />
 
       {/* TOAST NOTIFICATION CONTAINER */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4">

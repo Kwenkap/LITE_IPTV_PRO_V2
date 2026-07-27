@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <!-- Page d'Accueil Officielle - Power IPTV -->
+  <url>
+    <loc>https://poweriptvv2.netlify.app/</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>always</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=1200&h=630&q=80</image:loc>
+      <image:title>Power IPTV - Service d'Abonnement IPTV Premium 4K</image:title>
+      <image:caption>Power IPTV Portail Officiel Streaming 4K Ultra HD</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Web Player IPTV & Espace de Connexion Power IPTV -->
+  <url>
+    <loc>https://poweriptvv2.netlify.app/iptv</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&h=630&q=80</image:loc>
+      <image:title>Power IPTV Web Player 4K</image:title>
+      <image:caption>Lecteur IPTV en ligne pour abonnés Power IPTV</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Boutique Officielle d'Abonnements Power IPTV -->
+  <url>
+    <loc>https://poweriptvv2.netlify.app/store</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&w=1200&h=630&q=80</image:loc>
+      <image:title>Boutique d'Abonnements Power IPTV Premium</image:title>
+      <image:caption>Abonnements Power IPTV 1, 3, 6 et 12 mois au meilleur prix</image:caption>
+    </image:image>
+  </url>
+
+</urlset>

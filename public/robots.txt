@@ -1,0 +1,29 @@
+# Robots.txt pour Power IPTV (Netlify)
+User-agent: *
+Allow: /
+Allow: /iptv
+Allow: /store
+Allow: /*.js
+Allow: /*.css
+Allow: /*.png
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.svg
+Allow: /*.webp
+
+# User-Agent spécifiques pour moteurs de recherche
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Désindexer l'interface d'administration privée
+Disallow: /iptv/admin
+Disallow: /api/
+
+# Sitemap Officiel Power IPTV
+Sitemap: https://poweriptvv2.netlify.app/sitemap.xml

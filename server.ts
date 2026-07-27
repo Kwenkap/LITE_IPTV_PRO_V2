@@ -1198,7 +1198,7 @@ app.get("/api/store/products", async (req, res) => {
 
 // POST /api/admin/store/createProduct
 app.post("/api/admin/store/createProduct", requireAdmin, async (req, res) => {
-  const { title, category, price, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = req.body;
+  const { title, category, price, regionalPrices, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = req.body;
   if (!title || !category || price === undefined) {
     return res.status(400).json({ error: "Titre, catégorie et prix requis" });
   }
@@ -1209,6 +1209,11 @@ app.post("/api/admin/store/createProduct", requireAdmin, async (req, res) => {
       title,
       category,
       price: Number(price),
+      regionalPrices: regionalPrices || {
+        eu: Number(price),
+        us: Math.round((Number(price) * 1.1) * 100) / 100,
+        africa: Math.round(Number(price) * 650)
+      },
       originalPrice: originalPrice ? Number(originalPrice) : undefined,
       description: description || "",
       stockStatus: stockStatus || "in_stock",
@@ -1229,7 +1234,7 @@ app.post("/api/admin/store/createProduct", requireAdmin, async (req, res) => {
 
 // POST /api/admin/store/editProduct
 app.post("/api/admin/store/editProduct", requireAdmin, async (req, res) => {
-  const { id, title, category, price, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = req.body;
+  const { id, title, category, price, regionalPrices, originalPrice, description, stockStatus, badge, durationOrType, iconName, features } = req.body;
   if (!id) {
     return res.status(400).json({ error: "ID du produit requis" });
   }
@@ -1245,6 +1250,7 @@ app.post("/api/admin/store/editProduct", requireAdmin, async (req, res) => {
       ...(title && { title }),
       ...(category && { category }),
       ...(price !== undefined && { price: Number(price) }),
+      ...(regionalPrices !== undefined && { regionalPrices }),
       ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
       ...(description !== undefined && { description }),
       ...(stockStatus && { stockStatus }),
@@ -1297,7 +1303,7 @@ app.get("/api/store/orders", requireAdmin, async (req, res) => {
 
 // POST /api/store/checkout
 app.post("/api/store/checkout", async (req, res) => {
-  const { customerName, customerEmail, customerPhone, paymentMethod, items, totalAmount } = req.body;
+  const { customerName, customerEmail, customerPhone, paymentMethod, items, totalAmount, currency, currencySymbol, regionCode } = req.body;
   if (!customerName || !customerEmail || !customerPhone || !items || items.length === 0) {
     return res.status(400).json({ error: "Informations de commande incomplètes" });
   }
@@ -1311,6 +1317,9 @@ app.post("/api/store/checkout", async (req, res) => {
       paymentMethod: paymentMethod || "card",
       items,
       totalAmount: Number(totalAmount || 0),
+      currency: currency || "EUR",
+      currencySymbol: currencySymbol || "€",
+      regionCode: regionCode || "eu",
       status: "pending",
       createdAt: Date.now()
     };

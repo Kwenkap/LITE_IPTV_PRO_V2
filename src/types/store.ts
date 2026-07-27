@@ -2,11 +2,18 @@ export type ProductCategory = "streaming" | "software" | "social";
 
 export type StockStatus = "in_stock" | "limited" | "out_of_stock";
 
+export interface RegionalPrices {
+  eu?: number; // Price in EUR (€)
+  us?: number; // Price in USD ($)
+  africa?: number; // Price in FCFA (XAF/XOF)
+}
+
 export interface DigitalProduct {
   id: string;
   title: string;
   category: ProductCategory;
-  price: number;
+  price: number; // Base price (EUR by default)
+  regionalPrices?: RegionalPrices;
   originalPrice?: number;
   description: string;
   stockStatus: StockStatus;
@@ -33,6 +40,9 @@ export interface DigitalOrder {
   paymentMethod: "crypto" | "card" | "paypal" | "western_union" | "mobile_money";
   items: CartItem[];
   totalAmount: number;
+  currency?: string;
+  currencySymbol?: string;
+  regionCode?: "eu" | "us" | "africa";
   status: OrderStatus;
   createdAt: number;
   notes?: string;

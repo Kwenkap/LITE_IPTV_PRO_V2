@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   Shield, Lock, Users, UserPlus, Trash2, Copy, CheckCircle, 
   Search, LogOut, Key, Calendar, Tv, Clock, Eye, EyeOff, Plus, AlertTriangle, ChevronRight, Sparkles, RefreshCw, User,
-  MessageSquare, Check, Inbox, Mail, FileText, Pencil, ShoppingBag, Package, Tag, DollarSign, ShoppingBasket, PhoneCall, Filter
+  MessageSquare, Check, Inbox, Mail, FileText, Pencil, ShoppingBag, Package, Tag, DollarSign, ShoppingBasket, PhoneCall, Filter, Globe
 } from "lucide-react";
 import { DigitalProduct, DigitalOrder, ProductCategory, StockStatus } from "../types/store";
 
@@ -78,6 +78,9 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [prodDuration, setProdDuration] = useState("1 Mois / Profil HD");
   const [prodIcon, setProdIcon] = useState("Sparkles");
   const [prodFeatures, setProdFeatures] = useState("Ultra HD / 4K, 1 Écran simultané, Garantie Totale");
+  const [prodPriceEU, setProdPriceEU] = useState("");
+  const [prodPriceUS, setProdPriceUS] = useState("");
+  const [prodPriceAfrica, setProdPriceAfrica] = useState("");
   const [prodFormError, setProdFormError] = useState("");
   const [prodFormSuccess, setProdFormSuccess] = useState("");
 
@@ -180,10 +183,15 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
     setProdFormError("");
     setProdFormSuccess("");
 
-    if (!prodTitle.trim() || !prodPrice.trim()) {
+    const baseP = parseFloat(prodPrice || prodPriceEU);
+    if (!prodTitle.trim() || isNaN(baseP)) {
       setProdFormError("Titre et prix requis.");
       return;
     }
+
+    const pEu = parseFloat(prodPriceEU) || baseP;
+    const pUs = parseFloat(prodPriceUS) || Math.round((pEu * 1.1) * 100) / 100;
+    const pAf = parseFloat(prodPriceAfrica) || Math.round(pEu * 650);
 
     try {
       const featureList = prodFeatures.split(",").map(f => f.trim()).filter(Boolean);
@@ -196,7 +204,12 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
         body: JSON.stringify({
           title: prodTitle.trim(),
           category: prodCategory,
-          price: parseFloat(prodPrice),
+          price: pEu,
+          regionalPrices: {
+            eu: pEu,
+            us: pUs,
+            africa: pAf
+          },
           originalPrice: prodOriginalPrice ? parseFloat(prodOriginalPrice) : undefined,
           description: prodDesc,
           stockStatus: prodStock,
@@ -215,6 +228,9 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
       setProdFormSuccess("Produit ajouté avec succès à la boutique !");
       setProdTitle("");
       setProdPrice("");
+      setProdPriceEU("");
+      setProdPriceUS("");
+      setProdPriceAfrica("");
       setProdOriginalPrice("");
       setProdDesc("");
       setProdBadge("");
@@ -1916,13 +1932,16 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">
-                      Prix Vente (€)
+                      Prix Base (€)
                     </label>
                     <input
                       type="number"
                       step="0.01"
                       value={prodPrice}
-                      onChange={(e) => setProdPrice(e.target.value)}
+                      onChange={(e) => {
+                        setProdPrice(e.target.value);
+                        if (!prodPriceEU) setProdPriceEU(e.target.value);
+                      }}
                       placeholder="9.99"
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
                       required
@@ -1941,6 +1960,49 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                       placeholder="19.99"
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
                     />
+                  </div>
+                </div>
+
+                {/* Tarification Régionale (EU, US, Afrique) */}
+                <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+                  <span className="text-[11px] font-bold text-cyan-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Globe className="w-3.5 h-3.5" />
+                    Prix Régionaux (Optionnel - Auto si vide)
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">🇪🇺 Europe (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={prodPriceEU}
+                        onChange={(e) => setProdPriceEU(e.target.value)}
+                        placeholder={prodPrice || "4.99"}
+                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">🇺🇸 US ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={prodPriceUS}
+                        onChange={(e) => setProdPriceUS(e.target.value)}
+                        placeholder={prodPrice ? `${(parseFloat(prodPrice)*1.1).toFixed(2)}` : "5.49"}
+                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">🌍 Afrique (FCFA)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={prodPriceAfrica}
+                        onChange={(e) => setProdPriceAfrica(e.target.value)}
+                        placeholder={prodPrice ? `${Math.round(parseFloat(prodPrice)*650)}` : "3250"}
+                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -2080,12 +2142,21 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                           <h3 className="text-sm font-bold text-white mb-1">{p.title}</h3>
                           <p className="text-xs text-slate-400 line-clamp-2 mb-3">{p.description}</p>
 
-                          <div className="flex items-baseline gap-2 mb-3">
+                          <div className="flex items-baseline gap-2 mb-1">
                             <span className="text-lg font-extrabold text-white">{p.price.toFixed(2)} €</span>
                             {p.originalPrice && (
                               <span className="text-xs text-slate-500 line-through">{p.originalPrice.toFixed(2)} €</span>
                             )}
                             <span className="text-[10px] text-slate-400 ml-auto font-medium">{p.durationOrType}</span>
+                          </div>
+
+                          {/* Regional Prices Badge */}
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] bg-slate-900/90 p-1.5 rounded-lg border border-slate-800 my-2">
+                            <span className="text-slate-300 font-medium">🇪🇺 {(p.regionalPrices?.eu ?? p.price).toFixed(2)} €</span>
+                            <span className="text-slate-600">|</span>
+                            <span className="text-slate-300 font-medium">🇺🇸 ${((p.regionalPrices?.us ?? Math.round((p.price * 1.1) * 100) / 100)).toFixed(2)}</span>
+                            <span className="text-slate-600">|</span>
+                            <span className="text-emerald-400 font-bold">🌍 {Math.round(p.regionalPrices?.africa ?? (p.price * 650)).toLocaleString('fr-FR')} FCFA</span>
                           </div>
                         </div>
 
@@ -2397,7 +2468,17 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                       type="number"
                       step="0.01"
                       value={editingProd.price}
-                      onChange={(e) => setEditingProd({ ...editingProd, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const p = parseFloat(e.target.value) || 0;
+                        setEditingProd({ 
+                          ...editingProd, 
+                          price: p,
+                          regionalPrices: {
+                            ...editingProd.regionalPrices,
+                            eu: p
+                          }
+                        });
+                      }}
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
                       required
                     />
@@ -2412,6 +2493,65 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                       onChange={(e) => setEditingProd({ ...editingProd, originalPrice: parseFloat(e.target.value) || undefined })}
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500"
                     />
+                  </div>
+                </div>
+
+                {/* Regional Prices Edit Fields */}
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
+                  <label className="block text-xs font-bold text-cyan-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Globe className="w-3.5 h-3.5" />
+                    Ajuster les Prix Régionaux
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">🇪🇺 EU (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editingProd.regionalPrices?.eu ?? editingProd.price}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setEditingProd({
+                            ...editingProd,
+                            price: val,
+                            regionalPrices: { ...editingProd.regionalPrices, eu: val }
+                          });
+                        }}
+                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">🇺🇸 US ($)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editingProd.regionalPrices?.us ?? Math.round((editingProd.price * 1.1) * 100) / 100}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setEditingProd({
+                            ...editingProd,
+                            regionalPrices: { ...editingProd.regionalPrices, us: val }
+                          });
+                        }}
+                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-slate-400 mb-1">🌍 AF (FCFA)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={editingProd.regionalPrices?.africa ?? Math.round(editingProd.price * 650)}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setEditingProd({
+                            ...editingProd,
+                            regionalPrices: { ...editingProd.regionalPrices, africa: val }
+                          });
+                        }}
+                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
                   </div>
                 </div>
 
