@@ -92,20 +92,22 @@ export default function App() {
       <SEO {...seoConfig} />
       <InstallPWA />
       {/* Top Header Bar for Language Selector and Light/Dark Mode Switcher */}
-      <header className="w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/iptv")}>
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-violet-500 to-amber-400 p-[1.5px] shadow-md shadow-amber-500/10">
-            <div className={`w-full h-full rounded-[10.5px] flex items-center justify-center ${theme === "dark" ? "bg-[#0d111d]" : "bg-white"}`}>
-              <Tv className="w-4 h-4 text-amber-400" />
+      {!activeStreamUrl && (
+        <header className="w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/iptv")}>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-violet-500 to-amber-400 p-[1.5px] shadow-md shadow-amber-500/10">
+              <div className={`w-full h-full rounded-[10.5px] flex items-center justify-center ${theme === "dark" ? "bg-[#0d111d]" : "bg-white"}`}>
+                <Tv className="w-4 h-4 text-amber-400" />
+              </div>
             </div>
+            <span className={`text-base font-extrabold tracking-tight font-display ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+              POWER<span className="text-amber-400">IPTV</span>
+            </span>
           </div>
-          <span className={`text-base font-extrabold tracking-tight font-display ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-            POWER<span className="text-amber-400">IPTV</span>
-          </span>
-        </div>
 
-        <ThemeLanguageControls />
-      </header>
+          <ThemeLanguageControls />
+        </header>
+      )}
 
       {/* Immersive Cinematic Scrolling Poster Background for the Home Page */}
       {!isAdminPage && !isStorePage && !activeStreamUrl && <AnimatedPosterWall />}
