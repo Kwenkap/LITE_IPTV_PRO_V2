@@ -12,6 +12,12 @@
     <meta name="author" content="Power IPTV Premium" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="theme-color" content="#020617" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Power IPTV" />
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=192&h=192&q=80" />
+    
     <link rel="canonical" href="https://poweriptvv2.netlify.app/" />
     <link rel="alternate" hreflang="fr" href="https://poweriptvv2.netlify.app/" />
     <link rel="alternate" hreflang="x-default" href="https://poweriptvv2.netlify.app/" />
@@ -32,10 +38,14 @@
     <meta property="twitter:description" content="Regardez le meilleur du sport et du cinéma en 4K sans coupure avec Power IPTV. Serveurs haut débit ultra-stables." />
     <meta property="twitter:image" content="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=1200&h=630&q=80" />
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts Optimized Loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    </noscript>
     
     <!-- CSS Styles -->
     <style>
@@ -152,6 +162,44 @@
               "item": "https://poweriptvv2.netlify.app/store"
             }
           ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://poweriptvv2.netlify.app/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Comment activer mon abonnement après l'achat ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Une fois votre abonnement acheté sur notre Marketplace Partenaire, vous recevrez vos identifiants (nom d'utilisateur et mot de passe) par e-mail ou SMS. Saisissez-les simplement dans le formulaire de connexion ci-dessus et cliquez sur 'Lancer mon flux TV' pour lancer instantanément vos chaînes en direct."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Quels appareils et applications sont compatibles ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "POWER IPTV est compatible avec 100% des appareils modernes. Vous pouvez l'utiliser sur Smart TV (Samsung, LG, Android TV), boîtiers IPTV (Formuler, Apple TV, Firestick, MAG), smartphones et tablettes (iOS & Android), ainsi que sur ordinateur. Notre flux s'adapte automatiquement à votre lecteur préféré (Tivimate, IPTV Smarters, VLC, etc.)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Puis-je utiliser mon compte sur plusieurs appareils simultanément ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Par défaut, un abonnement standard autorise une seule connexion active à la fois pour garantir une fluidité parfaite et éviter les blocages. Si vous tentez de vous connecter sur plusieurs écrans en même temps, le flux risque de saccader. Si vous avez besoin de connexions simultanées pour votre foyer, contactez le support technique."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Que faire en cas de coupure ou de ralentissement de l'image ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nos serveurs premium bénéficient d'une stabilité de 99.9% avec des technologies de flux anti-coupures de pointe. En cas de freeze, nous vous recommandons : 1) De vérifier votre débit Internet (minimum 15-20 Mbps recommandé pour la HD/4K). 2) De redémarrer votre box Internet. 3) De basculer votre lecteur IPTV sur un autre serveur ou format si proposé."
+              }
+            }
+          ]
         }
       ]
     }
@@ -190,5 +238,16 @@
     </noscript>
 
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

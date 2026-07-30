@@ -7,6 +7,7 @@ import AnimatedPosterWall from "./components/AnimatedPosterWall";
 import HelpFloatingButton from "./components/HelpFloatingButton";
 import ThemeLanguageControls from "./components/ThemeLanguageControls";
 import SEO from "./components/SEO";
+import InstallPWA from "./components/InstallPWA";
 import { Shield, Tv, Sparkles, Server } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "./lib/i18n";
@@ -89,6 +90,7 @@ export default function App() {
       id="main-app-container"
     >
       <SEO {...seoConfig} />
+      <InstallPWA />
       {/* Top Header Bar for Language Selector and Light/Dark Mode Switcher */}
       <header className="w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/iptv")}>
