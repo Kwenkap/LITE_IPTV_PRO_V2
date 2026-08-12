@@ -18,7 +18,7 @@ interface AdSenseBannerProps {
 
 export default function AdSenseBanner({
   client = "ca-pub-4343998384590985",
-  slot = "1234567890", // Slot publicitaire
+  slot = "5222416367", // Slot publicitaire: pub perso 1
   format = "auto",
   responsive = true,
   className = "",
@@ -29,17 +29,24 @@ export default function AdSenseBanner({
   const pushedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Avoid duplicate initialization for the same ad unit
+    // Éviter les doubles appels push({}) sur le même composant
     if (pushedRef.current) return;
 
-    try {
-      if (typeof window !== "undefined") {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        pushedRef.current = true;
+    const timer = setTimeout(() => {
+      try {
+        if (typeof window !== "undefined" && adRef.current) {
+          // Vérifier si l'élément ins n'a pas déjà été rempli par AdSense
+          if (!adRef.current.getAttribute("data-adsbygoogle-status")) {
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            pushedRef.current = true;
+          }
+        }
+      } catch (err) {
+        console.warn("Google AdSense push error:", err);
       }
-    } catch (err) {
-      console.warn("Google AdSense error or blocked by adblocker:", err);
-    }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (

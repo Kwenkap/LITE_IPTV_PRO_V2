@@ -1226,7 +1226,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       </AnimatePresence>
 
       {/* GOOGLE ADSENSE BANNER */}
-      <AdSenseBanner client="ca-pub-4343998384590985" slot="1122334455" label="Publicité Google" />
+      <AdSenseBanner client="ca-pub-4343998384590985" slot="5222416367" label="Publicité Google" />
 
       {/* SEO SECTION FOR SEARCH ENGINE INDEXING & HIGH KEYWORD DENSITY */}
       <SEOContentSection />

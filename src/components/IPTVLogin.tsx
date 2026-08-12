@@ -585,11 +585,11 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
       </div>
       
-      <AdSenseBanner client="ca-pub-4343998384590985" slot="1234567890" label="Sponsorisé - Publicité Google" />
+      <AdSenseBanner client="ca-pub-4343998384590985" slot="5222416367" label="Sponsorisé - Publicité Google" />
 
       <FAQSection />
 
-      <AdSenseBanner client="ca-pub-4343998384590985" slot="0987654321" label="Annonce Google AdSense" />
+      <AdSenseBanner client="ca-pub-4343998384590985" slot="5222416367" label="Annonce Google AdSense" />
 
       <SEOContentSection />
     </div>
