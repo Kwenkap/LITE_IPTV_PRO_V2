@@ -1,0 +1,60 @@
+{
+  "admin_users": {
+    "dwayne": {
+      "role": "superuser",
+      "passwordHash": "$2b$10$wMbT516N8V5hv9hD89lAw.RlUAdVBX8DzuiSEGrgKmQSZnNCiONye",
+      "createdAt": 1783641796768,
+      "username": "dwayne"
+    },
+    "hermann": {
+      "role": "admin",
+      "username": "hermann",
+      "createdAt": 1784015798380,
+      "passwordHash": "$2b$10$Hi1PThK2iCUPm7ECHeJP/.YIv9RUXR7y4IVGPqIgR10MM23gromP."
+    },
+    "dwayne47h": {
+      "passwordHash": "$2b$10$bTZmX7AJnXC1Rf/xTC9aueqosX6HBjVTI16v6nNExBTEQ4aSLi2WW",
+      "createdAt": 1784019409579,
+      "username": "dwayne47h",
+      "role": "admin"
+    }
+  },
+  "iptv_users": {
+    "fabrice": {
+      "username": "fabrice",
+      "expiresAt": 1786801860000,
+      "createdAt": 1784037085166,
+      "encryptedUrl": "fd44a9b8e099c3b5bb0eee5a5f073a13:508d0e04851c6c82948b637488081212bd9a798c139f9854fdd48ab42fb65a3b",
+      "durationDays": 1,
+      "passwordHash": "$2b$10$0wwkpt9/JIxWmhnb15k1tu3jYx68Pd3en7w/S94A3BQ0J2Smhy5Lq",
+      "status": "active"
+    },
+    "her": {
+      "encryptedUrl": "6dd9ca7542cc82baa6c52c87f2c52398:b0b5ae824ed809238d2b371f7c164563c4a08bb477de245eacf8e80dd6c353cc",
+      "status": "expired",
+      "username": "her",
+      "createdAt": 1784015149078,
+      "expiresAt": 1784651520000,
+      "durationDays": 1,
+      "passwordHash": "$2b$10$a7MAspI3o1u5DBnUopyqOOH.NTKFpizN3e9qqXVbEu.yr9vWevf2q"
+    },
+    "jp": {
+      "encryptedUrl": "c8632c4e652b9bd85a6f9471bb591378:bada075ca074751bfe6d9b5accb45a6fa37e5a99f48b05ff82085a793c042f73",
+      "passwordHash": "$2b$10$r5Ax.wwTtE92zIN/gvcfUek.LijLPT5qlcz.GvAPSQCoYZcR4xQ/i",
+      "username": "jp",
+      "status": "active",
+      "durationDays": 30,
+      "createdAt": 1784029250039,
+      "expiresAt": 1786794000000
+    },
+    "paul": {
+      "passwordHash": "$2b$10$BALTd6GJ9jllqC5WT199DuuKoLAG0arwlKRiiQV.4.GdqiCNuvl3m",
+      "durationDays": 30,
+      "username": "paul",
+      "createdAt": 1784039916208,
+      "expiresAt": 1786631916208,
+      "status": "active",
+      "encryptedUrl": "00b52ba08cb9bbf2fbbddc39d9f4cb40:e6aa691b17da652ecba5221601e713f0eabd53e38c5a731f9b942332e62c38ec"
+    }
+  }
+}

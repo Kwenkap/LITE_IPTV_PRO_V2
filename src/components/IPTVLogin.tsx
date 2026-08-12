@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import FAQSection from "./FAQSection";
 import SEOContentSection from "./SEOContentSection";
+import AdSenseBanner from "./AdSenseBanner";
 import { useLanguage } from "../lib/i18n";
 
 // Simple robust obfuscation/encryption for local storage
@@ -97,10 +98,16 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
     setError("");
 
     try {
+      let deviceId = localStorage.getItem("iptv_device_id");
+      if (!deviceId) {
+        deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+        localStorage.setItem("iptv_device_id", deviceId);
+      }
+
       const response = await fetch("/api/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: loginUser, password: loginPass }),
+        body: JSON.stringify({ username: loginUser, password: loginPass, deviceId }),
       });
 
       const data = await response.json();
@@ -109,10 +116,14 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
         throw new Error(data.error || "Une erreur est survenue lors de la connexion.");
       }
 
-      if (data.isAdmin) {
+      if (data.isAdmin && !data.realUrl) {
         localStorage.setItem("iptv_admin_token", data.adminToken);
         onNavigateToAdmin();
         return;
+      }
+
+      if (data.isAdmin && data.adminToken) {
+        localStorage.setItem("iptv_admin_token", data.adminToken);
       }
 
       // If standard user, handle "Remember Me" options
@@ -574,7 +585,12 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
       </div>
       
+      <AdSenseBanner client="ca-pub-4343998384590985" slot="1234567890" label="Sponsorisé - Publicité Google" />
+
       <FAQSection />
+
+      <AdSenseBanner client="ca-pub-4343998384590985" slot="0987654321" label="Annonce Google AdSense" />
+
       <SEOContentSection />
     </div>
   );

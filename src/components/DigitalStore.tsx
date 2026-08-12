@@ -10,6 +10,7 @@ import { DigitalProduct, CartItem, ProductCategory } from "../types/store";
 import { useLanguage } from "../lib/i18n";
 import { COUNTRIES, detectUserCountry, getProductPriceForRegion, getOriginalPriceForRegion, formatPriceValue, CountryInfo } from "../lib/regionalPricing";
 import SEOContentSection from "./SEOContentSection";
+import AdSenseBanner from "./AdSenseBanner";
 
 interface DigitalStoreProps {
   onNavigateToIPTV: () => void;
@@ -1223,6 +1224,9 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           </div>
         )}
       </AnimatePresence>
+
+      {/* GOOGLE ADSENSE BANNER */}
+      <AdSenseBanner client="ca-pub-4343998384590985" slot="1122334455" label="Publicité Google" />
 
       {/* SEO SECTION FOR SEARCH ENGINE INDEXING & HIGH KEYWORD DENSITY */}
       <SEOContentSection />

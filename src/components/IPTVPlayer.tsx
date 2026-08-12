@@ -143,6 +143,40 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
     onClose();
   };
 
+  // Handle heartbeat for device limits
+  useEffect(() => {
+    if (!username) return;
+
+    const deviceId = localStorage.getItem("iptv_device_id");
+    
+    const sendHeartbeat = async () => {
+      try {
+        const response = await fetch("/api/session/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, deviceId }),
+        });
+        
+        if (!response.ok) {
+          // If rejected, the session is expired/invalid (e.g., connected on another device)
+          if (onSessionExpired) {
+            onSessionExpired();
+          } else {
+            onClose();
+          }
+        }
+      } catch (e) {
+        console.warn("Heartbeat failed", e);
+      }
+    };
+
+    // Send immediately and then every 30 seconds
+    sendHeartbeat();
+    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+    return () => clearInterval(heartbeatInterval);
+  }, [username, onClose, onSessionExpired]);
+
   // Handle stream load simulation
   useEffect(() => {
     setIsLoading(true);

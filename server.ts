@@ -531,7 +531,30 @@ function decrypt(cipherText: string): string {
 
 // Helper: Verify administrative credentials stored in Firestore (bypassed for frictionless admin console access)
 async function verifyAdminToken(token: string): Promise<boolean> {
-  return true;
+  if (!token || token === "bypass") return false;
+  
+  const parts = token.split(":");
+  if (parts.length !== 2) return false;
+  const [username, password] = parts;
+
+  let isAdminFound = false;
+  let adminData: any = null;
+
+  try {
+    const adminDocRef = db.collection("admin_users").doc(username);
+    const adminSnap = await adminDocRef.get();
+    if (adminSnap.exists) {
+      adminData = adminSnap.data();
+      isAdminFound = true;
+    }
+  } catch (err) {
+    console.warn("Firestore check failed in verifyAdminToken:", err);
+  }
+
+  if (isAdminFound && adminData) {
+    return bcrypt.compareSync(password, adminData.passwordHash);
+  }
+  return false;
 }
 
 // Middleware: Authentification Admin
@@ -969,6 +992,51 @@ app.get("/api/session/check-status", async (req, res) => {
   }
 });
 
+app.post("/api/session/heartbeat", async (req, res) => {
+  const { username, deviceId } = req.body;
+  if (!username || !deviceId) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+
+  const cleanUsername = username.trim().toLowerCase();
+  
+  try {
+    const userDoc = await db.collection("iptv_users").doc(cleanUsername).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    const userData = userDoc.data() as any;
+    if (userData.expiresAt < Date.now()) {
+      return res.status(403).json({ error: "Session expired" });
+    }
+    
+    const maxDevices = userData.maxDevices || 1;
+    let activeDevices = userData.activeDevices || [];
+    const nowMs = Date.now();
+    
+    activeDevices = activeDevices.filter((d: any) => nowMs - d.lastActive < 60000);
+    
+    const existingDevice = activeDevices.find((d: any) => d.deviceId === deviceId);
+    
+    if (!existingDevice && activeDevices.length >= maxDevices) {
+      return res.status(403).json({ error: "Device limit reached" });
+    }
+    
+    if (existingDevice) {
+      existingDevice.lastActive = nowMs;
+    } else {
+      activeDevices.push({ deviceId, lastActive: nowMs });
+    }
+    
+    await db.collection("iptv_users").doc(cleanUsername).update({ activeDevices });
+    
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Stream Access / Login Portal Router
 app.post("/api/stream", async (req, res) => {
   const { username, password } = req.body;
@@ -1018,6 +1086,28 @@ app.post("/api/stream", async (req, res) => {
     if (userData.expiresAt < Date.now()) {
       return res.status(403).json({ error: "Accès expiré" });
     }
+
+    const deviceId = req.body.deviceId || "unknown";
+    const maxDevices = userData.maxDevices || 1;
+    let activeDevices = userData.activeDevices || [];
+    
+    const nowMs = Date.now();
+    // Clear stale sessions (inactive for > 60 seconds)
+    activeDevices = activeDevices.filter((d: any) => nowMs - d.lastActive < 60000);
+    
+    const existingDevice = activeDevices.find((d: any) => d.deviceId === deviceId);
+    
+    if (!existingDevice && activeDevices.length >= maxDevices) {
+      return res.status(403).json({ error: `Limite d'écrans atteinte. Cet abonnement est limité à ${maxDevices} appareil(s) en même temps.` });
+    }
+    
+    if (existingDevice) {
+      existingDevice.lastActive = nowMs;
+    } else {
+      activeDevices.push({ deviceId, lastActive: nowMs });
+    }
+    
+    await db.collection("iptv_users").doc(cleanUsername).update({ activeDevices });
 
     const decryptedUrl = decrypt(userData.encryptedUrl);
     if (!decryptedUrl) {

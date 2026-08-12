@@ -15,6 +15,8 @@ interface IPTVUser {
   durationDays: number;
   status: "active" | "expired";
   decryptedUrl: string;
+  maxDevices?: number;
+  activeDevices?: { deviceId: string; lastActive: number }[];
 }
 
 interface AdminUser {
@@ -30,11 +32,11 @@ interface IPTVAdminProps {
 export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   // Authentication states
   const [adminToken, setAdminToken] = useState(() => {
-    return localStorage.getItem("iptv_admin_token") || "bypass";
+    return localStorage.getItem("iptv_admin_token") || "";
   });
   const [adminUsernameInput, setAdminUsernameInput] = useState("");
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -98,6 +100,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [newPassword, setNewPassword] = useState("");
   const [durationPreset, setDurationPreset] = useState("30"); // days, 'custom', or '99999' for unlimited
   const [customDays, setCustomDays] = useState("1");
+  const [newMaxDevices, setNewMaxDevices] = useState("1");
   const [realUrl, setRealUrl] = useState("");
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -114,6 +117,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
   const [editUserUsername, setEditUserUsername] = useState("");
   const [editUserPassword, setEditUserPassword] = useState("");
   const [editUserExpiresAt, setEditUserExpiresAt] = useState(""); // local datetime string
+  const [editUserMaxDevices, setEditUserMaxDevices] = useState("1");
   const [editUserError, setEditUserError] = useState("");
   const [editUserSuccess, setEditUserSuccess] = useState("");
 
@@ -488,6 +492,8 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("iptv_admin_token");
+    setAdminToken("");
+    setIsAuthenticated(false);
     onNavigateToLogin();
   };
 
@@ -540,6 +546,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
           username: newUsername.trim(),
           password: newPassword,
           durationDays: finalDurationDays,
+          maxDevices: parseInt(newMaxDevices, 10) || 1,
           realUrl: realUrl.trim(),
         }),
       });
@@ -679,6 +686,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
     const tzOffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
     setEditUserExpiresAt(localISOTime);
+    setEditUserMaxDevices(user.maxDevices?.toString() || "1");
     setEditUserError("");
     setEditUserSuccess("");
   };
@@ -713,6 +721,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
           newUsername: editUserUsername.trim().toLowerCase(),
           password: editUserPassword || undefined,
           expiresAt: expiresTimestamp,
+          maxDevices: parseInt(editUserMaxDevices, 10) || 1,
         }),
       });
 
@@ -914,7 +923,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
 
           <div className="mt-8 pt-6 border-t border-slate-800/60 text-center">
             <button
-              onClick={onNavigateToLogin}
+              onClick={handleLogout}
               className="text-xs font-medium text-slate-400 hover:text-white hover:underline transition-colors cursor-pointer"
               id="back-to-client-login-btn"
             >
@@ -943,7 +952,7 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
-            onClick={onNavigateToLogin}
+            onClick={handleLogout}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-medium rounded-xl transition-all cursor-pointer"
             id="view-client-portal-btn"
           >
@@ -1217,6 +1226,22 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
 
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+                    Écrans Simultanés (Max)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={newMaxDevices}
+                    onChange={(e) => setNewMaxDevices(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-850 rounded-xl text-white focus:outline-none focus:border-violet-500 text-sm"
+                    placeholder="ex: 1"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
                     Lien Réel de Flux IPTV (Source)
                   </label>
                   <textarea
@@ -1338,12 +1363,16 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                             </div>
                             <div>
                               <span className="text-sm font-bold text-white font-mono">{user.username}</span>
-                              <div className="flex items-center gap-2 mt-0.5">
+                              <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                 <span className="text-[10px] text-slate-500">Créé le {new Date(user.createdAt).toLocaleDateString()}</span>
                                 <span className="text-[10px] text-slate-600">•</span>
                                 <span className="text-[10px] text-slate-500 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
                                   {getRemainingTime(user.expiresAt)}
+                                </span>
+                                <span className="text-[10px] text-slate-600">•</span>
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  Écrans: <span className={(user.activeDevices?.length || 0) >= (user.maxDevices || 1) ? "text-amber-400" : "text-emerald-400"}>{user.activeDevices?.length || 0}</span> / {user.maxDevices || 1}
                                 </span>
                               </div>
                             </div>
@@ -2644,6 +2673,22 @@ export default function IPTVAdmin({ onNavigateToLogin }: IPTVAdminProps) {
                     onChange={(e) => setEditUserPassword(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-sm font-mono"
                     placeholder="Saisissez un nouveau mot de passe"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+                    Écrans Simultanés (Max)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={editUserMaxDevices}
+                    onChange={(e) => setEditUserMaxDevices(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-650 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-sm font-mono"
+                    placeholder="ex: 1"
+                    required
                   />
                 </div>
 

@@ -171,9 +171,42 @@ try {
   console.error("Failed to initialize Firebase client-side:", err);
 }
 
-// Check admin credentials
 async function verifyAdminToken(token: string): Promise<boolean> {
-  return true;
+  if (!token || token === "bypass") return false;
+  
+  const parts = token.split(":");
+  if (parts.length !== 2) return false;
+  const [username, password] = parts;
+
+  let isAdminFound = false;
+  let adminData: any = null;
+
+  if (db) {
+    try {
+      const adminDocRef = doc(db, "admin_users", username);
+      const adminSnap = await getDoc(adminDocRef);
+      if (adminSnap.exists()) {
+        adminData = adminSnap.data();
+        isAdminFound = true;
+      }
+    } catch (err) {
+      // Ignored
+    }
+  }
+
+  if (!isAdminFound) {
+    const localAdmins = ClientLocalDB.get("admin_users");
+    const matched = localAdmins.find(a => a.username === username);
+    if (matched) {
+      adminData = matched;
+      isAdminFound = true;
+    }
+  }
+
+  if (isAdminFound && adminData) {
+    return bcrypt.compareSync(password, adminData.passwordHash);
+  }
+  return false;
 }
 
 const DEFAULT_INITIAL_ADMINS = [
@@ -557,6 +590,43 @@ export async function initApiInterceptor() {
           return jsonResponse({ error: "Accès expiré" }, 403);
         }
 
+        const deviceId = body.deviceId || "unknown";
+        const maxDevices = userData.maxDevices || 1;
+        let activeDevices = userData.activeDevices || [];
+        
+        const nowMs = Date.now();
+        // Clear stale sessions (inactive for > 60 seconds)
+        activeDevices = activeDevices.filter((d: any) => nowMs - d.lastActive < 60000);
+        
+        const existingDevice = activeDevices.find((d: any) => d.deviceId === deviceId);
+        
+        if (!existingDevice && activeDevices.length >= maxDevices) {
+          return jsonResponse({ error: `Limite d'écrans atteinte. Cet abonnement est limité à ${maxDevices} appareil(s) en même temps.` }, 403);
+        }
+        
+        if (existingDevice) {
+          existingDevice.lastActive = nowMs;
+        } else {
+          activeDevices.push({ deviceId, lastActive: nowMs });
+        }
+        
+        userData.activeDevices = activeDevices;
+        
+        // Update local DB
+        const localUsers = ClientLocalDB.get("iptv_users");
+        const idx = localUsers.findIndex(u => u.username === cleanUsername);
+        if (idx !== -1) {
+          localUsers[idx] = userData;
+          ClientLocalDB.set("iptv_users", localUsers);
+        }
+        
+        // Update Firestore
+        if (db) {
+          try {
+            await setDoc(doc(db, "iptv_users", cleanUsername), { activeDevices }, { merge: true });
+          } catch (err) {}
+        }
+
         const decryptedUrl = await decryptClient(userData.encryptedUrl);
         if (!decryptedUrl) {
           return jsonResponse({ error: "Erreur lors du déchiffrement du flux" }, 500);
@@ -568,6 +638,84 @@ export async function initApiInterceptor() {
           username: cleanUsername,
           expiresAt: userData.expiresAt
         });
+      }
+
+      // --- ENDPOINT: POST /api/session/heartbeat ---
+      if (cleanPath === "/api/session/heartbeat" && reqMethod === "POST") {
+        const { username, deviceId } = body;
+        if (!username || !deviceId) {
+          return jsonResponse({ error: "Missing parameters" }, 400);
+        }
+
+        const cleanUsername = username.trim().toLowerCase();
+        
+        let isUserFound = false;
+        let userData: any = null;
+
+        if (db) {
+          try {
+            const userSnap = await getDoc(doc(db, "iptv_users", cleanUsername));
+            if (userSnap.exists()) {
+              userData = userSnap.data();
+              isUserFound = true;
+            }
+          } catch (err) {}
+        }
+        
+        if (!isUserFound) {
+          const localUsers = ClientLocalDB.get("iptv_users");
+          const matched = localUsers.find(u => u.username === cleanUsername);
+          if (matched) {
+            userData = matched;
+            isUserFound = true;
+          }
+        }
+
+        if (!isUserFound || !userData) {
+          return jsonResponse({ error: "User not found" }, 404);
+        }
+
+        if (userData.expiresAt < Date.now()) {
+          return jsonResponse({ error: "Session expired" }, 403);
+        }
+
+        const maxDevices = userData.maxDevices || 1;
+        let activeDevices = userData.activeDevices || [];
+        const nowMs = Date.now();
+        
+        // Remove stale sessions
+        activeDevices = activeDevices.filter((d: any) => nowMs - d.lastActive < 60000);
+        
+        const existingDevice = activeDevices.find((d: any) => d.deviceId === deviceId);
+        
+        if (!existingDevice && activeDevices.length >= maxDevices) {
+          return jsonResponse({ error: "Device limit reached" }, 403);
+        }
+        
+        if (existingDevice) {
+          existingDevice.lastActive = nowMs;
+        } else {
+          activeDevices.push({ deviceId, lastActive: nowMs });
+        }
+        
+        userData.activeDevices = activeDevices;
+        
+        // Update local
+        const localUsers = ClientLocalDB.get("iptv_users");
+        const idx = localUsers.findIndex(u => u.username === cleanUsername);
+        if (idx !== -1) {
+          localUsers[idx] = userData;
+          ClientLocalDB.set("iptv_users", localUsers);
+        }
+        
+        // Update Firestore
+        if (db) {
+          try {
+            await setDoc(doc(db, "iptv_users", cleanUsername), { activeDevices }, { merge: true });
+          } catch (err) {}
+        }
+        
+        return jsonResponse({ success: true });
       }
 
       // --- ENDPOINT: GET /api/admin/users ---
@@ -701,7 +849,7 @@ export async function initApiInterceptor() {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
         }
 
-        const { username, password, durationDays, realUrl } = body;
+        const { username, password, durationDays, realUrl, maxDevices } = body;
         if (!username || !password || durationDays === undefined || !realUrl) {
           return jsonResponse({ error: "Champs requis manquants" }, 400);
         }
@@ -720,6 +868,7 @@ export async function initApiInterceptor() {
           createdAt: now,
           expiresAt,
           durationDays,
+          maxDevices: maxDevices || 1,
           status: expiresAt > now ? "active" : "expired"
         };
 
@@ -742,6 +891,7 @@ export async function initApiInterceptor() {
               createdAt: now,
               expiresAt,
               durationDays,
+              maxDevices: maxDevices || 1,
               status: expiresAt > now ? "active" : "expired"
             });
           } catch (err) {
@@ -758,6 +908,7 @@ export async function initApiInterceptor() {
             createdAt: now,
             expiresAt,
             durationDays,
+            maxDevices: maxDevices || 1,
             status: newUser.status,
             decryptedUrl: realUrl
           }
@@ -803,7 +954,7 @@ export async function initApiInterceptor() {
           return jsonResponse({ error: "Clé ou session administrateur invalide" }, 403);
         }
 
-        const { id, newUsername, password, expiresAt } = body;
+        const { id, newUsername, password, expiresAt, maxDevices } = body;
         if (!id) {
           return jsonResponse({ error: "ID de l'utilisateur requis" }, 400);
         }
@@ -827,6 +978,10 @@ export async function initApiInterceptor() {
           updatedData.expiresAt = Number(expiresAt);
           const now = Date.now();
           updatedData.status = Number(expiresAt) > now ? "active" : "expired";
+        }
+        
+        if (maxDevices !== undefined) {
+          updatedData.maxDevices = Number(maxDevices);
         }
 
         if (newUsername && newUsername.toLowerCase() !== oldDocId) {
