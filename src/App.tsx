@@ -8,6 +8,7 @@ import HelpFloatingButton from "./components/HelpFloatingButton";
 import ThemeLanguageControls from "./components/ThemeLanguageControls";
 import SEO from "./components/SEO";
 import InstallPWA from "./components/InstallPWA";
+import GoogleAd from "./components/GoogleAd";
 import { Shield, Tv, Sparkles, Server } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "./lib/i18n";
@@ -260,6 +261,22 @@ export default function App() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Global Adsense Layout Placement with Layout Shift Prevention Fallback */}
+        {!isAdminPage && !activeStreamUrl && (
+          <div className="w-full max-w-5xl mt-6 px-2 pointer-events-auto" id="app-main-ad-wrapper">
+            <div className="w-full rounded-2xl bg-gradient-to-b from-slate-900/40 to-slate-950/60 p-1 border border-slate-800/40 shadow-lg shadow-black/20">
+              <GoogleAd 
+                client="ca-pub-4343998384590985"
+                slot="5222416367"
+                label="Partenaire Officiel & Annonce"
+                minHeight={100}
+                fallbackText="Synchronisation de l'espace publicitaire..."
+                debug={true}
+              />
+            </div>
+          </div>
+        )}
 
       </main>
 
