@@ -28,6 +28,8 @@ interface IPTVUser {
   expiresAt: number; // Timestamp (Date.now() + duration)
   durationDays: number;
   status: "active" | "expired";
+  maxDevices?: number;
+  activeDevices?: Array<{ deviceId: string; lastActive: number }>;
 }
 
 interface AdminUser {
