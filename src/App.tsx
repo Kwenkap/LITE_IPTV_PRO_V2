@@ -93,20 +93,22 @@ export default function App() {
       <SEO {...seoConfig} />
       <InstallPWA />
       {/* Top Header Bar for Language Selector and Light/Dark Mode Switcher */}
-      <header className="w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/iptv")}>
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-violet-500 to-amber-400 p-[1.5px] shadow-md shadow-amber-500/10">
-            <div className={`w-full h-full rounded-[10.5px] flex items-center justify-center ${theme === "dark" ? "bg-[#0d111d]" : "bg-white"}`}>
-              <Tv className="w-4 h-4 text-amber-400" />
+      {!activeStreamUrl && (
+        <header className="w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/iptv")}>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-violet-500 to-amber-400 p-[1.5px] shadow-md shadow-amber-500/10">
+              <div className={`w-full h-full rounded-[10.5px] flex items-center justify-center ${theme === "dark" ? "bg-[#0d111d]" : "bg-white"}`}>
+                <Tv className="w-4 h-4 text-amber-400" />
+              </div>
             </div>
+            <span className={`text-base font-extrabold tracking-tight font-display ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+              POWER<span className="text-amber-400">IPTV</span>
+            </span>
           </div>
-          <span className={`text-base font-extrabold tracking-tight font-display ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-            POWER<span className="text-amber-400">IPTV</span>
-          </span>
-        </div>
 
-        <ThemeLanguageControls />
-      </header>
+          <ThemeLanguageControls />
+        </header>
+      )}
 
       {/* Immersive Cinematic Scrolling Poster Background for the Home Page */}
       {!isAdminPage && !isStorePage && !activeStreamUrl && <AnimatedPosterWall />}
@@ -121,7 +123,7 @@ export default function App() {
       />
 
       {/* Main Core Content wrapper */}
-      <main className="flex-1 flex flex-col items-center justify-center py-6 px-4 relative z-10 w-full">
+      <main className={`flex-1 flex flex-col items-center justify-center relative z-10 w-full ${activeStreamUrl ? "p-0 h-screen overflow-hidden" : "py-6 px-4"}`}>
         
         {/* Header Title with animated glowing logo */}
         {!activeStreamUrl && (
@@ -284,28 +286,30 @@ export default function App() {
       {!isAdminPage && !activeStreamUrl && <HelpFloatingButton />}
 
       {/* Footer copyright and diagnostics */}
-      <footer 
-        className={`py-6 border-t relative z-10 text-center text-xs backdrop-blur-md transition-colors ${
-          theme === "dark"
-            ? "border-slate-800/80 bg-[#070a12]/80 text-slate-400"
-            : "border-slate-200 bg-white/80 text-slate-600"
-        }`} 
-        id="main-footer"
-      >
-        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-mono text-[11px]">
-            <Server className="w-3.5 h-3.5 text-amber-500" />
-            <span>{t("gateway_proxy")}</span>
-            <span className="text-emerald-500 font-semibold">{t("server_active")}</span>
+      {!activeStreamUrl && (
+        <footer 
+          className={`py-6 border-t relative z-10 text-center text-xs backdrop-blur-md transition-colors ${
+            theme === "dark"
+              ? "border-slate-800/80 bg-[#070a12]/80 text-slate-400"
+              : "border-slate-200 bg-white/80 text-slate-600"
+          }`} 
+          id="main-footer"
+        >
+          <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 font-mono text-[11px]">
+              <Server className="w-3.5 h-3.5 text-amber-500" />
+              <span>{t("gateway_proxy")}</span>
+              <span className="text-emerald-500 font-semibold">{t("server_active")}</span>
+            </div>
+            <div>
+              &copy; {new Date().getFullYear()} {t("copyright")}
+            </div>
+            <div className="flex items-center gap-3 font-mono text-[10px] text-slate-500">
+              <span>PROD • CLOUD_RUN</span>
+            </div>
           </div>
-          <div>
-            &copy; {new Date().getFullYear()} {t("copyright")}
-          </div>
-          <div className="flex items-center gap-3 font-mono text-[10px] text-slate-500">
-            <span>PROD • CLOUD_RUN</span>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }
