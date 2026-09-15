@@ -7,5 +7,6 @@
   "storageBucket": "prismatic-hologram-w7c1c.firebasestorage.app",
   "messagingSenderId": "354818024172",
   "measurementId": "",
-  "oAuthClientId": "354818024172-mclmu81np77rlj0scoifoktbvush6pt2.apps.googleusercontent.com"
+  "oAuthClientId": "354818024172-mclmu81np77rlj0scoifoktbvush6pt2.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

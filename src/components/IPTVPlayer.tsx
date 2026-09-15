@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Tv, Maximize, Minimize, ChevronLeft, ShieldCheck, Wifi, Clock, X, AlertTriangle
+  Tv, Maximize, Minimize, Clock, X, AlertTriangle
 } from "lucide-react";
 
 interface IPTVPlayerProps {
@@ -303,14 +303,7 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
       className="fixed inset-0 w-screen h-screen bg-black z-[9999] overflow-hidden flex flex-col justify-center items-center select-none m-0 p-0"
       id="iptv-immersive-fullscreen-player"
     >
-      {/* Top Edge Hover Trigger Zone (captures mouse even above iframe to reveal controls) */}
-      <div 
-        className="absolute top-0 inset-x-0 h-12 z-40 pointer-events-auto bg-transparent"
-        onMouseEnter={handleMouseMove}
-        onMouseMove={handleMouseMove}
-      />
-
-      {/* Stream Player Area (Full window, zero margins) */}
+      {/* Stream Player Area (Full window, zero margins, 100% free top area for site navigation) */}
       <div className="absolute inset-0 w-full h-full z-10 bg-black">
         {isDirectVideo ? (
           <video
@@ -355,127 +348,48 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
         )}
       </AnimatePresence>
 
-      {/* Sleek Floating Header Controls (Non-obstructive, auto-hides) */}
-      <AnimatePresence>
-        {showControls && (
-          <motion.div
-            initial={{ opacity: 0, y: -15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-0 inset-x-0 p-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-50 flex items-center justify-between pointer-events-auto"
-          >
-            {/* Left: Quick Back Button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleClosePlayer}
-                className="px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-white rounded-xl border border-slate-700/60 backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer text-xs font-semibold shadow-lg shadow-black/50 hover:scale-105 active:scale-95"
-                title="Quitter le lecteur et revenir au portail (Échap)"
-                id="player-back-btn"
-              >
-                <ChevronLeft className="w-4 h-4 text-violet-400" />
-                <span>Quitter</span>
-              </button>
-
-              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-black/40 border border-white/5 text-[10px] text-slate-300 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Flux direct actif</span>
-              </div>
-            </div>
-
-            {/* Right: Actions (Timer, Fullscreen Toggle, Close) */}
-            <div className="flex items-center gap-2">
+      {/* DISCREET FLOATING CONTROLS IN BOTTOM-RIGHT CORNER (Zero top obstruction, free navigation) */}
+      <div 
+        className="fixed bottom-4 right-4 z-50 pointer-events-auto flex items-center select-none"
+        id="iptv-player-floating-controls"
+      >
+        <AnimatePresence mode="wait">
+          {showControls ? (
+            /* Expanded Quick Pill when moving mouse or tapping */
+            <motion.div
+              key="player-expanded-controls"
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              transition={{ duration: 0.18 }}
+              className="flex items-center gap-2 p-1.5 rounded-full bg-black/85 backdrop-blur-xl border border-white/20 shadow-2xl shadow-black"
+            >
               {/* Expiration Countdown badge */}
-              <div className={`hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-mono text-[10px] backdrop-blur-md transition-all ${
-                timeRemaining <= 300000 
-                  ? "bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse" 
-                  : "bg-slate-900/80 border-slate-800 text-slate-300"
-              }`}>
-                <Clock className={`w-3 h-3 ${timeRemaining <= 300000 ? "text-rose-400 animate-spin" : "text-violet-400"}`} />
-                <span className={timeRemaining <= 300000 ? "font-bold text-rose-300" : "text-emerald-400"}>
+              <div 
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-mono text-[11px] backdrop-blur-md ${
+                  timeRemaining <= 300000 
+                    ? "bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse" 
+                    : "bg-slate-900/90 border-slate-800 text-slate-300"
+                }`}
+                title="Temps restant sur votre session"
+              >
+                <Clock className={`w-3.5 h-3.5 ${timeRemaining <= 300000 ? "text-rose-400 animate-spin" : "text-violet-400"}`} />
+                <span className={timeRemaining <= 300000 ? "font-bold text-rose-300" : "text-emerald-400 font-medium"}>
                   {formatTimeRemaining(timeRemaining)}
                 </span>
               </div>
 
               {/* Fullscreen Button */}
               <button
-                onClick={toggleFullScreen}
-                className="px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-white rounded-xl border border-slate-700/60 backdrop-blur-md transition-all cursor-pointer shadow-lg shadow-black/50 flex items-center gap-1.5 text-xs font-semibold hover:scale-105 active:scale-95"
-                title={isFullScreen ? "Quitter le plein écran (F)" : "Activer le mode plein écran (F)"}
-                id="player-fullscreen-btn"
-              >
-                {isFullScreen ? (
-                  <>
-                    <Minimize className="w-3.5 h-3.5 text-violet-400" />
-                    <span className="hidden md:inline">Sortir Plein Écran</span>
-                  </>
-                ) : (
-                  <>
-                    <Maximize className="w-3.5 h-3.5 text-violet-400" />
-                    <span className="hidden md:inline">Plein Écran</span>
-                  </>
-                )}
-              </button>
-
-              {/* Quick Close Button */}
-              <button
-                onClick={handleClosePlayer}
-                className="p-1.5 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl font-bold transition-all cursor-pointer shadow-lg hover:scale-105 active:scale-95"
-                title="Fermer le lecteur (Échap)"
-                id="player-close-btn"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Discreet Persistent Mini-Controls on Desktop (Visible only on desktop when controls auto-hide so the user is never trapped) */}
-      {!showControls && (
-        <div className="hidden sm:flex absolute top-2 right-2 z-40 items-center gap-1.5 opacity-40 hover:opacity-100 transition-opacity duration-200 pointer-events-auto">
-          <button
-            onClick={toggleFullScreen}
-            className="p-2 bg-black/70 hover:bg-black/95 text-white/90 hover:text-white rounded-lg border border-white/10 backdrop-blur-md shadow-lg cursor-pointer"
-            title={isFullScreen ? "Quitter le plein écran" : "Plein écran"}
-          >
-            {isFullScreen ? <Minimize className="w-3.5 h-3.5 text-violet-400" /> : <Maximize className="w-3.5 h-3.5 text-violet-400" />}
-          </button>
-          <button
-            onClick={handleClosePlayer}
-            className="p-2 bg-rose-600/70 hover:bg-rose-600 text-white rounded-lg border border-rose-500/30 backdrop-blur-md shadow-lg cursor-pointer"
-            title="Quitter le lecteur"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* MOBILE-ONLY FLOATING FULLSCREEN & CONTROLS (sm:hidden) */}
-      <div 
-        className="sm:hidden fixed bottom-4 right-4 z-[100] pointer-events-auto flex items-center select-none"
-        id="mobile-fullscreen-control-wrapper"
-      >
-        <AnimatePresence mode="wait">
-          {showControls ? (
-            /* Expanded Mobile Quick Pill when screen is touched/controls visible */
-            <motion.div
-              key="mobile-expanded-controls"
-              initial={{ opacity: 0, scale: 0.85, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: 8 }}
-              transition={{ duration: 0.18 }}
-              className="flex items-center gap-2 p-1.5 rounded-full bg-black/80 backdrop-blur-xl border border-white/20 shadow-2xl shadow-black"
-            >
-              <button
                 type="button"
                 onClick={toggleFullScreen}
-                className={`min-h-[44px] min-w-[44px] px-3.5 rounded-full flex items-center gap-2 text-xs font-bold transition-all active:scale-95 shadow-md ${
+                className={`min-h-[40px] px-3.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition-all active:scale-95 shadow-md cursor-pointer ${
                   isFullScreen
-                    ? "bg-violet-600 text-white border border-violet-400/40"
-                    : "bg-slate-800 text-white border border-slate-600/70"
+                    ? "bg-violet-600 text-white border border-violet-400/40 hover:bg-violet-500"
+                    : "bg-slate-800 text-white border border-slate-700 hover:bg-slate-700"
                 }`}
-                aria-label={isFullScreen ? "Sortir du plein écran" : "Mode plein écran"}
+                title={isFullScreen ? "Quitter le plein écran (F)" : "Activer le mode plein écran (F)"}
+                id="player-fullscreen-btn"
               >
                 {isFullScreen ? (
                   <>
@@ -490,52 +404,63 @@ export default function IPTVPlayer({ url, username, expiresAt, onClose, onSessio
                 )}
               </button>
 
+              {/* Quick Close / Exit Button */}
               <button
                 type="button"
                 onClick={handleClosePlayer}
-                className="min-h-[44px] min-w-[44px] px-3 rounded-full bg-rose-600/90 active:bg-rose-700 text-white flex items-center justify-center text-xs font-bold shadow-md active:scale-95 transition-all"
+                className="min-h-[40px] px-3.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center gap-1.5 text-xs font-bold shadow-md active:scale-95 transition-all cursor-pointer"
+                title="Quitter le lecteur et revenir au portail (Échap)"
+                id="player-close-btn"
+              >
+                <X className="w-4 h-4" />
+                <span>Quitter</span>
+              </button>
+            </motion.div>
+          ) : (
+            /* Ultra-Compact Floating Mini-Icon Pill during idle playback */
+            <motion.div
+              key="player-compact-fab"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 0.45, scale: 1 }}
+              whileHover={{ opacity: 1, scale: 1.05 }}
+              whileTap={{ opacity: 1, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.18 }}
+              className="flex items-center gap-1.5 p-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-xl"
+            >
+              <button
+                type="button"
+                onClick={toggleFullScreen}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                  isFullScreen ? "text-violet-300" : "text-amber-400"
+                }`}
+                title={isFullScreen ? "Sortir du plein écran (F)" : "Plein écran (F)"}
+                aria-label={isFullScreen ? "Sortir du plein écran" : "Plein écran"}
+              >
+                {isFullScreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={handleClosePlayer}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                title="Quitter le lecteur (Échap)"
                 aria-label="Quitter le lecteur"
               >
                 <X className="w-4 h-4" />
               </button>
             </motion.div>
-          ) : (
-            /* Discreet, Ultra-Compact Floating Icon Button when watching video (Never clutters video/subtitles) */
-            <motion.button
-              key="mobile-compact-fab"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 0.45, scale: 1 }}
-              whileTap={{ opacity: 1, scale: 0.92 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.18 }}
-              type="button"
-              onClick={toggleFullScreen}
-              className={`min-h-[44px] min-w-[44px] w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md border shadow-xl transition-opacity active:opacity-100 ${
-                isFullScreen
-                  ? "bg-violet-950/75 border-violet-400/40 text-violet-300"
-                  : "bg-black/60 border-white/20 text-white/90"
-              }`}
-              title={isFullScreen ? "Sortir du plein écran" : "Plein écran"}
-              aria-label={isFullScreen ? "Sortir du plein écran" : "Plein écran"}
-            >
-              {isFullScreen ? (
-                <Minimize className="w-4 h-4 text-violet-300" />
-              ) : (
-                <Maximize className="w-4 h-4 text-amber-400" />
-              )}
-            </motion.button>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Persistent Pre-Expiration Alert (5 minutes remaining warning toast) */}
+      {/* Persistent Pre-Expiration Alert at Bottom Center (5 minutes remaining warning toast, does not block top) */}
       <AnimatePresence>
         {showWarningToast && timeRemaining > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -30, x: "-50%" }}
+            initial={{ opacity: 0, y: 30, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -30, x: "-50%" }}
-            className="absolute top-14 left-1/2 transform -translate-x-1/2 z-50 p-3 bg-slate-950/95 border border-rose-500/30 rounded-xl shadow-2xl flex items-start gap-2.5 text-slate-200 text-xs font-medium max-w-sm backdrop-blur-md"
+            exit={{ opacity: 0, y: 30, x: "-50%" }}
+            className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 p-3 bg-slate-950/95 border border-rose-500/30 rounded-xl shadow-2xl flex items-start gap-2.5 text-slate-200 text-xs font-medium max-w-sm backdrop-blur-md"
             id="session-expiration-warning-toast"
           >
             <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5 animate-bounce" />
