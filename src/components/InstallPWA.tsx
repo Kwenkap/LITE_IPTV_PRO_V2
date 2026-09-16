@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function InstallPWA() {
@@ -30,6 +30,17 @@ export default function InstallPWA() {
     };
   }, []);
 
+  // Fermeture automatique au bout de 30 secondes pour ne pas gêner la navigation
+  useEffect(() => {
+    if (!showPrompt) return;
+
+    const timer = setTimeout(() => {
+      setShowPrompt(false);
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [showPrompt]);
+
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       return;
@@ -48,14 +59,27 @@ export default function InstallPWA() {
     <AnimatePresence>
       {showPrompt && (
         <motion.div
+          id="pwa-install-banner"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer transition-colors"
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-indigo-600 hover:bg-indigo-700 text-white pl-4 pr-2 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer transition-colors"
           onClick={handleInstallClick}
         >
           <Download className="w-4 h-4" />
           <span className="text-sm font-medium">Installer l'Application</span>
+          <button
+            type="button"
+            className="ml-1 p-1 rounded-full hover:bg-indigo-800 text-indigo-200 hover:text-white transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPrompt(false);
+            }}
+            title="Fermer"
+            aria-label="Fermer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
