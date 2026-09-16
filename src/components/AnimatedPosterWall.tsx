@@ -110,7 +110,7 @@ export default function AnimatedPosterWall() {
         theme === "dark"
           ? "bg-gradient-to-b from-[#0a0d16] via-[#0a0d16]/95 to-[#0a0d16]"
           : "bg-gradient-to-b from-[#fbfaf6] via-[#fbfaf6]/95 to-[#fbfaf6]"
-      } z-10`} />
+      } z-[1]`} />
     </div>
   );
 }

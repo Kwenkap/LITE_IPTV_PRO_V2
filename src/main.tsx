@@ -5,13 +5,27 @@ import './index.css';
 import { initApiInterceptor } from './lib/apiInterceptor.ts';
 import { LanguageThemeProvider } from './lib/i18n.tsx';
 
-// Initialiser l'intercepteur API pour activer le fallback client-side (Netlify, etc.)
-initApiInterceptor().finally(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <LanguageThemeProvider>
-        <App />
-      </LanguageThemeProvider>
-    </StrictMode>,
-  );
-});
+// Déclencher l'intercepteur API en arrière-plan sans bloquer le rendu du DOM
+try {
+  initApiInterceptor().catch((err) => {
+    console.warn("API interceptor warning:", err);
+  });
+} catch (e) {
+  console.warn("API interceptor initialisation error:", e);
+}
+
+const rootEl = document.getElementById('root');
+if (rootEl) {
+  try {
+    createRoot(rootEl).render(
+      <StrictMode>
+        <LanguageThemeProvider>
+          <App />
+        </LanguageThemeProvider>
+      </StrictMode>,
+    );
+  } catch (renderError) {
+    console.error("Critical rendering error:", renderError);
+  }
+}
+
