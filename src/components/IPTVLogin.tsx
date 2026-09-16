@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import FAQSection from "./FAQSection";
 import SEOContentSection from "./SEOContentSection";
-import GoogleAd from "./GoogleAd";
 import { useLanguage } from "../lib/i18n";
 
 // Simple robust obfuscation/encryption for local storage
@@ -585,21 +584,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
       </div>
       
-      <GoogleAd 
-        client="ca-pub-4343998384590985" 
-        slot="5222416367" 
-        label="Sponsorisé - Publicité Google" 
-        fallbackText="Chargement du partenaire..."
-      />
-
       <FAQSection />
-
-      <GoogleAd 
-        client="ca-pub-4343998384590985" 
-        slot="5222416367" 
-        label="Annonce Google AdSense" 
-        fallbackText="Chargement de l'annonce..."
-      />
 
       <SEOContentSection />
     </div>
