@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLanguage } from '../lib/i18n';
 
 export default function InstallPWA() {
+  const { theme } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -55,22 +57,36 @@ export default function InstallPWA() {
     setShowPrompt(false);
   };
 
+  const isDark = theme === "dark";
+
   return (
     <AnimatePresence>
       {showPrompt && (
         <motion.div
           id="pwa-install-banner"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-indigo-600 hover:bg-indigo-700 text-white pl-4 pr-2 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer transition-colors"
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 pl-4 pr-2 py-2 rounded-full shadow-xl flex items-center gap-2.5 cursor-pointer transition-all border ${
+            isDark
+              ? "bg-[#0d1222] border-amber-500/40 text-amber-400 hover:border-amber-400 shadow-amber-950/40"
+              : "bg-white border-amber-400 text-amber-700 hover:border-amber-500 shadow-amber-500/10"
+          }`}
           onClick={handleInstallClick}
         >
-          <Download className="w-4 h-4" />
-          <span className="text-sm font-medium">Installer l'Application</span>
+          <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+            <Download className="w-3.5 h-3.5 text-amber-500" />
+          </div>
+          <span className={`text-xs font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+            Installer l'Application
+          </span>
           <button
             type="button"
-            className="ml-1 p-1 rounded-full hover:bg-indigo-800 text-indigo-200 hover:text-white transition-colors"
+            className={`ml-1 p-1 rounded-full transition-colors cursor-pointer ${
+              isDark
+                ? "hover:bg-slate-800 text-slate-400 hover:text-white"
+                : "hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               setShowPrompt(false);

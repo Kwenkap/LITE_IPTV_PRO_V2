@@ -85,7 +85,7 @@ export default function App() {
       className={`min-h-screen flex flex-col relative overflow-x-hidden transition-colors duration-300 ${
         theme === "dark" 
           ? "bg-[#0a0d16] text-slate-100 selection:bg-amber-500/30 selection:text-white" 
-          : "bg-[#fbfaf6] text-slate-900 selection:bg-amber-300 selection:text-slate-900"
+          : "bg-[#f8fafc] text-slate-900 selection:bg-amber-400/30 selection:text-slate-900"
       }`} 
       id="main-app-container"
     >
@@ -93,15 +93,17 @@ export default function App() {
       <InstallPWA />
       {/* Top Header Bar for Language Selector and Light/Dark Mode Switcher */}
       {!activeStreamUrl && (
-        <header className="w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
+        <header className={`w-full relative z-50 pointer-events-auto px-4 py-3 flex items-center justify-between max-w-7xl mx-auto transition-colors ${
+          theme === "dark" ? "" : "border-b border-slate-200/60"
+        }`}>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo("/iptv")}>
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-violet-500 to-amber-400 p-[1.5px] shadow-md shadow-amber-500/10">
               <div className={`w-full h-full rounded-[10.5px] flex items-center justify-center ${theme === "dark" ? "bg-[#0d111d]" : "bg-white"}`}>
-                <Tv className="w-4 h-4 text-amber-400" />
+                <Tv className="w-4 h-4 text-amber-500" />
               </div>
             </div>
             <span className={`text-base font-extrabold tracking-tight font-display ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-              POWER<span className="text-amber-400">IPTV</span>
+              POWER<span className="text-amber-500">IPTV</span>
             </span>
           </div>
 
@@ -112,12 +114,12 @@ export default function App() {
       {/* Immersive Cinematic Scrolling Poster Background for the Home Page */}
       {!isAdminPage && !isStorePage && !activeStreamUrl && <AnimatedPosterWall />}
 
-      {/* Decorative Warm Background Glow Nodes (Zero performance overhead CSS radial gradients) */}
+      {/* Decorative Warm Background Glow Nodes */}
       <div 
         className={`absolute inset-0 w-full h-full pointer-events-none z-0 ${
           theme === "dark"
             ? "bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-950/20 via-transparent to-transparent"
-            : "bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-200/30 via-transparent to-transparent"
+            : "bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-100/40 via-transparent to-transparent"
         }`} 
       />
 

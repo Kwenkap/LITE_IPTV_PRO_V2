@@ -96,22 +96,23 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
   // Icon mapper helper
   const renderIcon = (iconName: string) => {
+    const isDark = theme === "dark";
     switch (iconName) {
-      case "Tv": return <Tv className="w-6 h-6 text-purple-400" />;
-      case "Sparkles": return <Sparkles className="w-6 h-6 text-fuchsia-400" />;
-      case "PlayCircle": return <PlayCircle className="w-6 h-6 text-cyan-400" />;
-      case "Zap": return <Zap className="w-6 h-6 text-amber-400" />;
-      case "Film": return <Film className="w-6 h-6 text-pink-400" />;
-      case "ShieldCheck": return <ShieldCheck className="w-6 h-6 text-emerald-400" />;
-      case "Palette": return <Palette className="w-6 h-6 text-indigo-400" />;
-      case "Bot": return <Bot className="w-6 h-6 text-violet-400" />;
-      case "FileText": return <FileText className="w-6 h-6 text-blue-400" />;
-      case "Lock": return <Lock className="w-6 h-6 text-rose-400" />;
-      case "Users": return <Users className="w-6 h-6 text-teal-400" />;
-      case "TrendingUp": return <TrendingUp className="w-6 h-6 text-rose-400" />;
-      case "Share2": return <Share2 className="w-6 h-6 text-sky-400" />;
-      case "Star": return <Star className="w-6 h-6 text-amber-400" />;
-      default: return <Sparkles className="w-6 h-6 text-purple-400" />;
+      case "Tv": return <Tv className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Sparkles": return <Sparkles className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "PlayCircle": return <PlayCircle className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Zap": return <Zap className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Film": return <Film className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "ShieldCheck": return <ShieldCheck className={`w-5 h-5 ${isDark ? "text-emerald-400" : "text-emerald-600"}`} />;
+      case "Palette": return <Palette className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Bot": return <Bot className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "FileText": return <FileText className={`w-5 h-5 ${isDark ? "text-slate-300" : "text-slate-700"}`} />;
+      case "Lock": return <Lock className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Users": return <Users className={`w-5 h-5 ${isDark ? "text-cyan-400" : "text-cyan-600"}`} />;
+      case "TrendingUp": return <TrendingUp className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Share2": return <Share2 className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      case "Star": return <Star className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
+      default: return <Sparkles className={`w-5 h-5 ${isDark ? "text-amber-400" : "text-amber-600"}`} />;
     }
   };
 
@@ -229,26 +230,46 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
     return matchesCategory && matchesSearch;
   });
 
+  const isDark = theme === "dark";
+
   return (
-    <div className="min-h-screen bg-[#09090b] text-slate-100 font-sans relative selection:bg-purple-500/30 selection:text-white w-full">
+    <div className={`min-h-screen font-sans relative selection:bg-amber-500/30 w-full transition-colors duration-300 ${
+      isDark 
+        ? "bg-[#0a0d16] text-slate-100 selection:text-white" 
+        : "bg-[#f8fafc] text-slate-900 selection:text-slate-900"
+    }`}>
       
-      {/* Dynamic Background Glows */}
+      {/* Warm Ambient Glows matching login page */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[150px]" />
-        <div className="absolute top-[30%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[150px]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] rounded-full bg-fuchsia-600/10 blur-[150px]" />
+        <div className={`absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[150px] transition-opacity ${
+          isDark ? "bg-amber-500/10" : "bg-amber-300/20"
+        }`} />
+        <div className={`absolute top-[30%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[150px] transition-opacity ${
+          isDark ? "bg-amber-600/5" : "bg-amber-200/25"
+        }`} />
+        <div className={`absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] rounded-full blur-[150px] transition-opacity ${
+          isDark ? "bg-amber-700/5" : "bg-slate-200/40"
+        }`} />
       </div>
 
-      {/* STICKY GLASSMORPHISM NAVBAR */}
-      <header className="sticky top-0 z-40 bg-[#09090b]/85 backdrop-blur-xl border-b border-white/10 transition-all duration-200">
+      {/* STICKY NAVBAR */}
+      <header className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-all duration-200 ${
+        isDark 
+          ? "bg-[#0a0d16]/85 border-white/10" 
+          : "bg-white/85 border-slate-200/80 shadow-xs"
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
           
           {/* Button to Home / Accueil */}
           <button
             onClick={onNavigateToIPTV}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold hover:text-white transition-all cursor-pointer shadow-sm"
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+              isDark 
+                ? "bg-[#0d1222] border border-slate-800 hover:border-amber-500/40 text-slate-200 hover:text-white" 
+                : "bg-white border border-slate-200 hover:border-amber-500/50 text-slate-700 hover:text-slate-900"
+            }`}
           >
-            <Home className="w-4 h-4 text-cyan-400" />
+            <Home className="w-4 h-4 text-amber-500" />
             <span className="hidden sm:inline">Accueil</span>
           </button>
 
@@ -257,24 +278,32 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
             {/* Country & Currency Detection Button */}
             <button
               onClick={() => setIsCountryModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 text-slate-200 text-xs font-medium cursor-pointer transition-all shadow-sm group"
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all shadow-xs group ${
+                isDark 
+                  ? "bg-[#0d1222] border border-slate-800 hover:border-amber-500/40 text-slate-200" 
+                  : "bg-white border border-slate-200 hover:border-amber-500/50 text-slate-700"
+              }`}
               title="Changer de pays / devise"
             >
               <span className="text-base">{selectedCountry.flag}</span>
               <span className="hidden md:inline font-semibold">{selectedCountry.name}</span>
-              <span className="text-cyan-400 font-mono font-bold">({selectedCountry.symbol})</span>
-              <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400 transition-colors" />
+              <span className="text-amber-500 font-mono font-bold">({selectedCountry.symbol})</span>
+              <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
             </button>
 
             {/* Shopping Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative group p-2.5 rounded-xl bg-gradient-to-r from-purple-600/20 to-cyan-500/20 border border-purple-500/30 hover:border-cyan-400/50 text-white transition-all shadow-lg shadow-purple-500/10 flex items-center gap-2 cursor-pointer"
+              className={`relative group p-2.5 rounded-xl border transition-all shadow-sm flex items-center gap-2 cursor-pointer ${
+                isDark 
+                  ? "bg-amber-500/10 border-amber-500/30 hover:border-amber-400 text-white shadow-amber-950/20" 
+                  : "bg-amber-50 border-amber-300 hover:border-amber-400 text-slate-900"
+              }`}
             >
-              <ShoppingBag className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <ShoppingBag className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-semibold hidden sm:inline">Panier</span>
               {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-mono text-[10px] font-bold flex items-center justify-center animate-bounce shadow-md">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-500 text-white font-mono text-[10px] font-bold flex items-center justify-center shadow-md">
                   {cartCount}
                 </span>
               )}
@@ -291,20 +320,26 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/10 via-fuchsia-500/10 to-cyan-500/10 border border-purple-500/30 text-xs font-medium backdrop-blur-md text-purple-300"
+            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-semibold backdrop-blur-md ${
+              isDark 
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-300" 
+                : "bg-amber-50 border-amber-300/80 text-amber-900 shadow-xs"
+            }`}
           >
-            <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span>Revente Officielle & Livraison Instantanée 24h/7d</span>
+            <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+            <span>Boutique Officielle & Livraison Instantanée 24h/7d</span>
           </motion.div>
 
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none font-display"
+            className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none font-display ${
+              isDark ? "text-white" : "text-slate-900"
+            }`}
           >
             Abonnements VOD, Clés Logiciels & <br className="hidden sm:block" />
-            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="text-amber-500">
               Services Boost Social
             </span>
           </motion.h1>
@@ -313,7 +348,9 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed"
+            className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed ${
+              isDark ? "text-slate-400" : "text-slate-600"
+            }`}
           >
             Accédez aux meilleurs comptes streaming (Netflix, Disney+, Canal+), clés de licences authentiques (Windows, Canva Pro, ChatGPT) et boosts réseaux au meilleur prix.
           </motion.p>
@@ -325,19 +362,27 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
             transition={{ delay: 0.3 }}
             className="relative max-w-xl mx-auto mt-8"
           >
-            <div className="relative flex items-center rounded-2xl bg-[#0d0d12]/90 border border-purple-500/30 p-1.5 focus-within:border-cyan-400 shadow-xl shadow-purple-900/20 backdrop-blur-md transition-all">
-              <Search className="w-5 h-5 text-slate-400 ml-3 shrink-0" />
+            <div className={`relative flex items-center rounded-2xl border p-1.5 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 shadow-md backdrop-blur-md transition-all ${
+              isDark 
+                ? "bg-[#0d1222] border-slate-800" 
+                : "bg-white border-slate-200"
+            }`}>
+              <Search className={`w-5 h-5 ml-3 shrink-0 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
               <input 
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher (ex: Netflix, Windows 11, Canva, ChatGPT, TikTok...)" 
-                className="w-full bg-transparent px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none"
+                className={`w-full bg-transparent px-3 py-2 text-sm focus:outline-none ${
+                  isDark ? "text-white placeholder-slate-500" : "text-slate-900 placeholder-slate-400"
+                }`}
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery("")} 
-                  className="p-1 hover:bg-white/10 rounded-full text-slate-400 mr-2"
+                  className={`p-1 rounded-full mr-2 transition-colors ${
+                    isDark ? "hover:bg-white/10 text-slate-400" : "hover:bg-slate-100 text-slate-500"
+                  }`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -347,32 +392,40 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
           {/* Reassurance Badges */}
           <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left max-w-4xl mx-auto">
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className={`flex items-center gap-2.5 p-3 rounded-xl border backdrop-blur-xs transition-colors ${
+              isDark ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200 shadow-xs"
+            }`}>
+              <Zap className="w-4 h-4 text-amber-500 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white">Livraison Instantanée</p>
-                <p className="text-[10px] text-slate-400">Réception par mail / WhatsApp</p>
+                <p className={`text-xs font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>Livraison Instantanée</p>
+                <p className={`text-[10px] ${isDark ? "text-slate-400" : "text-slate-500"}`}>Réception mail / WhatsApp</p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className={`flex items-center gap-2.5 p-3 rounded-xl border backdrop-blur-xs transition-colors ${
+              isDark ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200 shadow-xs"
+            }`}>
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white">Garantie Totale</p>
-                <p className="text-[10px] text-slate-400">Remplacement sans frais</p>
+                <p className={`text-xs font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>Garantie Totale</p>
+                <p className={`text-[10px] ${isDark ? "text-slate-400" : "text-slate-500"}`}>Remplacement sans frais</p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <Lock className="w-4 h-4 text-cyan-400 shrink-0" />
+            <div className={`flex items-center gap-2.5 p-3 rounded-xl border backdrop-blur-xs transition-colors ${
+              isDark ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200 shadow-xs"
+            }`}>
+              <Lock className="w-4 h-4 text-amber-500 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white">Paiement Sécurisé</p>
-                <p className="text-[10px] text-slate-400">Crypto, CB, Mobile Money</p>
+                <p className={`text-xs font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>Paiement Sécurisé</p>
+                <p className={`text-[10px] ${isDark ? "text-slate-400" : "text-slate-500"}`}>Crypto, CB, Mobile Money</p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <Headphones className="w-4 h-4 text-purple-400 shrink-0" />
+            <div className={`flex items-center gap-2.5 p-3 rounded-xl border backdrop-blur-xs transition-colors ${
+              isDark ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200 shadow-xs"
+            }`}>
+              <Headphones className="w-4 h-4 text-amber-500 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-white">Support 24/7</p>
-                <p className="text-[10px] text-slate-400">Assistance client réactive</p>
+                <p className={`text-xs font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>Support 24/7</p>
+                <p className={`text-[10px] ${isDark ? "text-slate-400" : "text-slate-500"}`}>Assistance réactive</p>
               </div>
             </div>
           </div>
@@ -382,8 +435,10 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
       {/* POPULAR CATEGORIES CARDS */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10 relative">
-        <h2 className="text-xl font-bold tracking-tight text-white mb-6 flex items-center gap-2 font-display">
-          <Sparkles className="w-5 h-5 text-purple-400" />
+        <h2 className={`text-xl font-bold tracking-tight mb-6 flex items-center gap-2 font-display ${
+          isDark ? "text-white" : "text-slate-900"
+        }`}>
+          <Sparkles className="w-5 h-5 text-amber-500" />
           <span>Catégories Populaires</span>
         </h2>
 
@@ -393,22 +448,37 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           <motion.div 
             whileHover={{ scale: 1.02 }}
             onClick={() => setSelectedCategory("streaming")}
-            className={`cursor-pointer rounded-2xl p-6 bg-gradient-to-b from-[#12101e] to-[#0d0d12] border transition-all relative overflow-hidden group ${selectedCategory === "streaming" ? "border-purple-500 ring-2 ring-purple-500/20" : "border-purple-500/20 hover:border-purple-500/50"}`}
+            className={`cursor-pointer rounded-2xl p-6 border transition-all relative overflow-hidden group shadow-sm ${
+              selectedCategory === "streaming" 
+                ? isDark 
+                  ? "bg-[#0d1222] border-amber-500 ring-2 ring-amber-500/20" 
+                  : "bg-white border-amber-500 ring-2 ring-amber-500/20"
+                : isDark 
+                  ? "bg-[#0d1222] border-slate-800 hover:border-amber-500/50" 
+                  : "bg-white border-slate-200 hover:border-amber-500/50"
+            }`}
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all" />
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <div className={`w-12 h-12 rounded-xl border flex items-center justify-center ${
+                isDark 
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-400" 
+                  : "bg-amber-50 border-amber-300 text-amber-600"
+              }`}>
                 <Tv className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">Streaming & VOD</h3>
-                <p className="text-xs text-slate-400">Comptes VIP & Profils Privés</p>
+                <h3 className={`text-lg font-bold transition-colors ${
+                  isDark ? "text-white group-hover:text-amber-400" : "text-slate-900 group-hover:text-amber-600"
+                }`}>Streaming & VOD</h3>
+                <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>Comptes VIP & Profils Privés</p>
               </div>
             </div>
-            <p className="text-xs text-slate-300 mb-4 line-clamp-2">
+            <p className={`text-xs mb-4 line-clamp-2 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               Netflix 4K, Disney+, Canal+, Prime Video, Crunchyroll, ADN, HBO Max en Ultra HD à prix imbattable.
             </p>
-            <div className="flex items-center justify-between text-xs font-semibold text-purple-400 pt-2 border-t border-white/5">
+            <div className={`flex items-center justify-between text-xs font-semibold pt-2 border-t ${
+              isDark ? "text-amber-400 border-white/5" : "text-amber-600 border-slate-100"
+            }`}>
               <span>Voir les abonnements</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -418,22 +488,37 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           <motion.div 
             whileHover={{ scale: 1.02 }}
             onClick={() => setSelectedCategory("software")}
-            className={`cursor-pointer rounded-2xl p-6 bg-gradient-to-b from-[#0e1620] to-[#0d0d12] border transition-all relative overflow-hidden group ${selectedCategory === "software" ? "border-cyan-500 ring-2 ring-cyan-500/20" : "border-cyan-500/20 hover:border-cyan-500/50"}`}
+            className={`cursor-pointer rounded-2xl p-6 border transition-all relative overflow-hidden group shadow-sm ${
+              selectedCategory === "software" 
+                ? isDark 
+                  ? "bg-[#0d1222] border-amber-500 ring-2 ring-amber-500/20" 
+                  : "bg-white border-amber-500 ring-2 ring-amber-500/20"
+                : isDark 
+                  ? "bg-[#0d1222] border-slate-800 hover:border-amber-500/50" 
+                  : "bg-white border-slate-200 hover:border-amber-500/50"
+            }`}
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all" />
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <div className={`w-12 h-12 rounded-xl border flex items-center justify-center ${
+                isDark 
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                  : "bg-emerald-50 border-emerald-200 text-emerald-600"
+              }`}>
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">Clés & Logiciels</h3>
-                <p className="text-xs text-slate-400">Licences Officieuses & IA</p>
+                <h3 className={`text-lg font-bold transition-colors ${
+                  isDark ? "text-white group-hover:text-amber-400" : "text-slate-900 group-hover:text-amber-600"
+                }`}>Clés & Logiciels</h3>
+                <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>Licences Officielles & IA</p>
               </div>
             </div>
-            <p className="text-xs text-slate-300 mb-4 line-clamp-2">
+            <p className={`text-xs mb-4 line-clamp-2 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               Windows 11 Pro, Office 365, Canva Pro, ChatGPT Plus (GPT-4o), Antivirus Kaspersky.
             </p>
-            <div className="flex items-center justify-between text-xs font-semibold text-cyan-400 pt-2 border-t border-white/5">
+            <div className={`flex items-center justify-between text-xs font-semibold pt-2 border-t ${
+              isDark ? "text-amber-400 border-white/5" : "text-amber-600 border-slate-100"
+            }`}>
               <span>Voir les logiciels</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -443,22 +528,37 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           <motion.div 
             whileHover={{ scale: 1.02 }}
             onClick={() => setSelectedCategory("social")}
-            className={`cursor-pointer rounded-2xl p-6 bg-gradient-to-b from-[#1a0f1c] to-[#0d0d12] border transition-all relative overflow-hidden group ${selectedCategory === "social" ? "border-fuchsia-500 ring-2 ring-fuchsia-500/20" : "border-fuchsia-500/20 hover:border-fuchsia-500/50"}`}
+            className={`cursor-pointer rounded-2xl p-6 border transition-all relative overflow-hidden group shadow-sm ${
+              selectedCategory === "social" 
+                ? isDark 
+                  ? "bg-[#0d1222] border-amber-500 ring-2 ring-amber-500/20" 
+                  : "bg-white border-amber-500 ring-2 ring-amber-500/20"
+                : isDark 
+                  ? "bg-[#0d1222] border-slate-800 hover:border-amber-500/50" 
+                  : "bg-white border-slate-200 hover:border-amber-500/50"
+            }`}
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-2xl group-hover:bg-fuchsia-500/20 transition-all" />
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-fuchsia-500/20 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
+              <div className={`w-12 h-12 rounded-xl border flex items-center justify-center ${
+                isDark 
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-400" 
+                  : "bg-amber-50 border-amber-300 text-amber-600"
+              }`}>
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white group-hover:text-fuchsia-300 transition-colors">Boost Réseaux</h3>
-                <p className="text-xs text-slate-400">Abonnés, Likes & Vues</p>
+                <h3 className={`text-lg font-bold transition-colors ${
+                  isDark ? "text-white group-hover:text-amber-400" : "text-slate-900 group-hover:text-amber-600"
+                }`}>Boost Réseaux</h3>
+                <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>Abonnés, Likes & Vues</p>
               </div>
             </div>
-            <p className="text-xs text-slate-300 mb-4 line-clamp-2">
+            <p className={`text-xs mb-4 line-clamp-2 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               Propulsez vos comptes TikTok, Instagram, YouTube, Facebook, X (Twitter) et Avis Google 5★.
             </p>
-            <div className="flex items-center justify-between text-xs font-semibold text-fuchsia-400 pt-2 border-t border-white/5">
+            <div className={`flex items-center justify-between text-xs font-semibold pt-2 border-t ${
+              isDark ? "text-amber-400 border-white/5" : "text-amber-600 border-slate-100"
+            }`}>
               <span>Voir les boosts</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -471,51 +571,61 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10 relative" id="catalog">
         
         {/* Category Tab Selector */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-8 flex-wrap gap-4">
+        <div className={`flex items-center justify-between border-b pb-4 mb-8 flex-wrap gap-4 ${
+          isDark ? "border-slate-800/80" : "border-slate-200"
+        }`}>
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === "all"
-                  ? "bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20"
-                  : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                  : isDark 
+                    ? "bg-[#0d1222] border border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/30" 
+                    : "bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:border-amber-500/40 shadow-xs"
               }`}
             >
               Tous les Produits ({products.length})
             </button>
             <button
               onClick={() => setSelectedCategory("streaming")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === "streaming"
-                  ? "bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20"
-                  : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                  : isDark 
+                    ? "bg-[#0d1222] border border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/30" 
+                    : "bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:border-amber-500/40 shadow-xs"
               }`}
             >
               🎬 Streaming & VOD
             </button>
             <button
               onClick={() => setSelectedCategory("software")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === "software"
-                  ? "bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20"
-                  : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                  : isDark 
+                    ? "bg-[#0d1222] border border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/30" 
+                    : "bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:border-amber-500/40 shadow-xs"
               }`}
             >
               🔑 Clés & Logiciels
             </button>
             <button
               onClick={() => setSelectedCategory("social")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === "social"
-                  ? "bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-lg shadow-purple-500/20"
-                  : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                  : isDark 
+                    ? "bg-[#0d1222] border border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/30" 
+                    : "bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:border-amber-500/40 shadow-xs"
               }`}
             >
               🚀 Boost Réseaux
             </button>
           </div>
 
-          <div className="text-xs text-slate-400 font-mono">
+          <div className={`text-xs font-mono ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {filteredProducts.length} produit(s) disponible(s)
           </div>
         </div>
@@ -526,77 +636,51 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
             {Array.from({ length: 8 }).map((_, index) => (
               <div 
                 key={index}
-                className="rounded-2xl bg-[#0d0d12] border border-white/10 p-5 flex flex-col justify-between shadow-xl animate-pulse relative overflow-hidden"
+                className={`rounded-2xl border p-5 flex flex-col justify-between shadow-sm animate-pulse relative overflow-hidden ${
+                  isDark ? "bg-[#0d1222] border-slate-800" : "bg-white border-slate-200"
+                }`}
               >
-                {/* Shimmer gradient effect */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.03] to-transparent animate-[shimmer_2s_infinite]" />
-
                 <div>
-                  {/* Top Header: Badge & Stock Skeletons */}
                   <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="h-5 w-24 bg-slate-800/80 rounded-full" />
-                    <div className="h-5 w-20 bg-slate-800/80 rounded-full" />
+                    <div className={`h-5 w-24 rounded-full ${isDark ? "bg-slate-800" : "bg-slate-200"}`} />
+                    <div className={`h-5 w-20 rounded-full ${isDark ? "bg-slate-800" : "bg-slate-200"}`} />
                   </div>
 
-                  {/* Title & Icon Skeleton */}
                   <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800/80 shrink-0" />
+                    <div className={`w-10 h-10 rounded-xl shrink-0 ${isDark ? "bg-slate-800" : "bg-slate-200"}`} />
                     <div className="space-y-2 flex-1">
-                      <div className="h-4 w-3/4 bg-slate-800/80 rounded" />
-                      <div className="h-3 w-1/2 bg-slate-800/50 rounded" />
+                      <div className={`h-4 w-3/4 rounded ${isDark ? "bg-slate-800" : "bg-slate-200"}`} />
+                      <div className={`h-3 w-1/2 rounded ${isDark ? "bg-slate-800/60" : "bg-slate-200/70"}`} />
                     </div>
                   </div>
 
-                  {/* Description Skeleton */}
                   <div className="space-y-2 mb-4">
-                    <div className="h-3 w-full bg-slate-800/60 rounded" />
-                    <div className="h-3 w-4/5 bg-slate-800/60 rounded" />
-                  </div>
-
-                  {/* Features List Skeleton */}
-                  <div className="space-y-2 mb-5 border-t border-white/5 pt-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3.5 h-3.5 bg-slate-800/80 rounded-full shrink-0" />
-                      <div className="h-2.5 w-32 bg-slate-800/60 rounded" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3.5 h-3.5 bg-slate-800/80 rounded-full shrink-0" />
-                      <div className="h-2.5 w-28 bg-slate-800/60 rounded" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3.5 h-3.5 bg-slate-800/80 rounded-full shrink-0" />
-                      <div className="h-2.5 w-36 bg-slate-800/60 rounded" />
-                    </div>
+                    <div className={`h-3 w-full rounded ${isDark ? "bg-slate-800/60" : "bg-slate-200/70"}`} />
+                    <div className={`h-3 w-4/5 rounded ${isDark ? "bg-slate-800/60" : "bg-slate-200/70"}`} />
                   </div>
                 </div>
 
-                {/* Footer Price & Buttons Skeleton */}
-                <div className="pt-3 border-t border-white/5 mt-auto">
-                  <div className="flex items-baseline justify-between mb-4">
-                    <div className="space-y-1">
-                      <div className="h-2.5 w-16 bg-slate-800/50 rounded" />
-                      <div className="h-6 w-24 bg-slate-800/80 rounded" />
-                    </div>
-                    <div className="h-4 w-16 bg-slate-800/50 rounded-full" />
-                  </div>
+                <div className={`pt-3 border-t mt-auto ${isDark ? "border-slate-800" : "border-slate-100"}`}>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="h-9 bg-slate-800/80 rounded-xl" />
-                    <div className="h-9 bg-purple-900/40 border border-purple-500/20 rounded-xl" />
+                    <div className={`h-9 rounded-xl ${isDark ? "bg-slate-800" : "bg-slate-200"}`} />
+                    <div className={`h-9 rounded-xl ${isDark ? "bg-amber-500/20" : "bg-amber-100"}`} />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="py-16 text-center bg-[#0d0d12]/50 rounded-2xl border border-white/5 p-8">
-            <Search className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-white">Aucun produit trouvé</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+          <div className={`py-16 text-center rounded-2xl border p-8 ${
+            isDark ? "bg-[#0d1222] border-slate-800" : "bg-white border-slate-200 shadow-sm"
+          }`}>
+            <Search className={`w-12 h-12 mx-auto mb-3 ${isDark ? "text-slate-600" : "text-slate-400"}`} />
+            <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-slate-900"}`}>Aucun produit trouvé</h3>
+            <p className={`text-xs mt-1 max-w-sm mx-auto ${isDark ? "text-slate-400" : "text-slate-500"}`}>
               Essayez de modifier votre recherche ou de changer de catégorie.
             </p>
             <button
               onClick={() => { setSelectedCategory("all"); setSearchQuery(""); }}
-              className="mt-4 px-4 py-2 bg-purple-600/20 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-semibold hover:bg-purple-600/30 transition-all"
+              className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold hover:bg-amber-600 transition-all cursor-pointer shadow-sm"
             >
               Réinitialiser les filtres
             </button>
@@ -606,87 +690,88 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
             {filteredProducts.map((product) => (
               <motion.div
                 key={product.id}
-                whileHover={{ y: -6, scale: 1.01 }}
+                whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
-                className="group relative rounded-2xl bg-[#0d0d12] border border-white/10 p-5 flex flex-col justify-between hover:border-transparent hover:ring-2 hover:ring-purple-500/50 shadow-xl transition-all overflow-hidden"
+                className={`group relative rounded-2xl border p-5 flex flex-col justify-between shadow-sm transition-all overflow-hidden ${
+                  isDark 
+                    ? "bg-[#0d1222] border-slate-800 hover:border-amber-500/50 hover:ring-2 hover:ring-amber-500/20" 
+                    : "bg-white border-slate-200 hover:border-amber-500 hover:ring-2 hover:ring-amber-500/20 shadow-xs"
+                }`}
               >
-                {/* Glow Overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                <div className="absolute -top-12 -right-12 w-24 h-24 bg-gradient-to-bl from-purple-500/20 to-cyan-500/20 rounded-full blur-xl group-hover:scale-150 transition-transform pointer-events-none" />
-
                 <div>
-                  {/* Top Header: Badge & Stock with Framer Motion hover effects */}
+                  {/* Top Header: Badge & Stock */}
                   <div className="flex items-center justify-between gap-2 mb-3">
                     {product.badge ? (
-                      <motion.span 
-                        whileHover={{ scale: 1.08, rotate: -2 }}
-                        className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-fuchsia-500/20 to-purple-500/20 border border-amber-500/40 text-[10px] font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-amber-500/20"
-                      >
-                        <Flame className="w-3 h-3 text-amber-400 animate-pulse" />
+                      <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-extrabold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                        <Flame className="w-3 h-3 text-amber-500" />
                         {product.badge}
-                      </motion.span>
+                      </span>
                     ) : (
-                      <motion.span 
-                        whileHover={{ scale: 1.05 }}
-                        className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[10px] text-slate-300 font-mono flex items-center gap-1"
-                      >
-                        <Sparkles className="w-3 h-3 text-cyan-400" />
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono flex items-center gap-1 border ${
+                        isDark 
+                          ? "bg-slate-900 border-slate-800 text-slate-300" 
+                          : "bg-slate-50 border-slate-200 text-slate-600"
+                      }`}>
+                        <Sparkles className="w-3 h-3 text-amber-500" />
                         {product.durationOrType}
-                      </motion.span>
+                      </span>
                     )}
 
                     {product.stockStatus === "low_stock" ? (
-                      <motion.span 
-                        whileHover={{ scale: 1.08 }}
-                        className="text-[10px] font-extrabold font-mono px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-500/20 to-amber-500/20 border border-rose-500/40 text-rose-300 flex items-center gap-1 shadow-sm shadow-rose-500/20"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
+                      <span className="text-[10px] font-extrabold font-mono px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-500 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
                         Stock Limité
-                      </motion.span>
+                      </span>
                     ) : product.stockStatus === "in_stock" ? (
-                      <motion.span 
-                        whileHover={{ scale: 1.05 }}
-                        className="text-[10px] font-semibold font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span className="text-[10px] font-semibold font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         En stock
-                      </motion.span>
+                      </span>
                     ) : (
-                      <motion.span 
-                        whileHover={{ scale: 1.05 }}
-                        className="text-[10px] font-semibold font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700"
-                      >
+                      <span className={`text-[10px] font-semibold font-mono px-2 py-0.5 rounded-full border ${
+                        isDark ? "bg-slate-800 text-slate-400 border-slate-700" : "bg-slate-100 text-slate-500 border-slate-200"
+                      }`}>
                         Rupture
-                      </motion.span>
+                      </span>
                     )}
                   </div>
 
                   {/* Title & Icon */}
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 group-hover:border-purple-500/40 transition-colors">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+                      isDark 
+                        ? "bg-slate-900/90 border-slate-800 group-hover:border-amber-500/40" 
+                        : "bg-slate-50 border-slate-200 group-hover:border-amber-500/40"
+                    }`}>
                       {renderIcon(product.iconName)}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-1">
+                      <h3 className={`text-base font-bold transition-colors line-clamp-1 ${
+                        isDark ? "text-white group-hover:text-amber-400" : "text-slate-900 group-hover:text-amber-600"
+                      }`}>
                         {product.title}
                       </h3>
-                      <p className="text-[11px] font-mono text-cyan-400 mt-0.5">
+                      <p className="text-[11px] font-mono text-amber-500 mt-0.5 font-medium">
                         {product.durationOrType}
                       </p>
                     </div>
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+                  <p className={`text-xs mb-4 line-clamp-2 leading-relaxed ${
+                    isDark ? "text-slate-400" : "text-slate-600"
+                  }`}>
                     {product.description}
                   </p>
 
                   {/* Features list */}
                   {product.features && product.features.length > 0 && (
-                    <ul className="space-y-1.5 mb-5 border-t border-white/5 pt-3">
+                    <ul className={`space-y-1.5 mb-5 border-t pt-3 ${isDark ? "border-slate-800" : "border-slate-100"}`}>
                       {product.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-300">
-                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <li key={idx} className={`flex items-center gap-1.5 text-[11px] ${
+                          isDark ? "text-slate-300" : "text-slate-700"
+                        }`}>
+                          <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                           <span className="line-clamp-1">{feat}</span>
                         </li>
                       ))}
@@ -695,15 +780,19 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                 </div>
 
                 {/* Footer Price & Actions */}
-                <div className="pt-3 border-t border-white/5 mt-auto">
+                <div className={`pt-3 border-t mt-auto ${isDark ? "border-slate-800" : "border-slate-100"}`}>
                   <div className="flex items-baseline justify-between mb-4">
                     <div>
-                      <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                      <span className={`text-[10px] font-mono flex items-center gap-1 ${
+                        isDark ? "text-slate-400" : "text-slate-500"
+                      }`}>
                         <span>{selectedCountry.flag}</span>
                         <span>Tarif {selectedCountry.name}</span>
                       </span>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-black text-white font-display">
+                        <span className={`text-xl font-black font-display ${
+                          isDark ? "text-white" : "text-slate-900"
+                        }`}>
                           {formatPriceValue(
                             getProductPriceForRegion(product, selectedCountry.region),
                             selectedCountry.currencySymbol,
@@ -711,7 +800,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                           )}
                         </span>
                         {getOriginalPriceForRegion(product, selectedCountry.region) && (
-                          <span className="text-xs text-slate-500 line-through font-mono">
+                          <span className="text-xs text-slate-400 line-through font-mono">
                             {formatPriceValue(
                               getOriginalPriceForRegion(product, selectedCountry.region)!,
                               selectedCountry.currencySymbol,
@@ -722,7 +811,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                       </div>
                     </div>
 
-                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                       Livraison 5 min
                     </span>
                   </div>
@@ -731,14 +820,18 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => addToCart(product)}
-                      className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                      className={`w-full py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                        isDark 
+                          ? "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-200" 
+                          : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700"
+                      }`}
                     >
-                      <Plus className="w-3.5 h-3.5 text-purple-400" />
+                      <Plus className="w-3.5 h-3.5 text-amber-500" />
                       Panier
                     </button>
                     <button
                       onClick={() => buyNow(product)}
-                      className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-xs font-bold text-white shadow-md shadow-purple-500/20 flex items-center justify-center gap-1 transition-all active:scale-95"
+                      className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
                     >
                       Acheter
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -754,74 +847,90 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       </section>
 
       {/* LIVE REVIEWS CAROUSEL SECTION */}
-      <section className="py-16 bg-[#07070a] border-y border-white/5 relative z-10 overflow-hidden">
+      <section className={`py-16 border-y relative z-10 overflow-hidden transition-colors ${
+        isDark ? "bg-[#080b12] border-slate-800/80" : "bg-slate-100/70 border-slate-200"
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 font-medium mb-3">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500 font-medium mb-3">
+            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
             <span>4.9 / 5 sur +1,200 Avis Vérifiés</span>
           </div>
-          <h2 className="text-2xl font-bold text-white font-display">Ce que disent nos clients</h2>
+          <h2 className={`text-2xl font-bold font-display ${isDark ? "text-white" : "text-slate-900"}`}>
+            Ce que disent nos clients
+          </h2>
         </div>
 
         {/* Marquee Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-          <div className="p-5 rounded-2xl bg-[#0d0d12] border border-white/5 relative">
+          <div className={`p-5 rounded-2xl border relative transition-colors ${
+            isDark ? "bg-[#0d1222] border-slate-800" : "bg-white border-slate-200 shadow-xs"
+          }`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1 text-amber-400">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-amber-400" />
                 ))}
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+              <span className="text-[10px] text-emerald-500 font-mono flex items-center gap-1 font-semibold">
                 <CheckCircle className="w-3 h-3" /> Achat Vérifié
               </span>
             </div>
-            <p className="text-xs text-slate-300 italic mb-4 leading-relaxed">
+            <p className={`text-xs italic mb-4 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               "Abonnement Netflix 4K activé en moins de 3 minutes sur mon compte. Qualité vidéo parfaite sans aucune déconnexion."
             </p>
-            <div className="flex items-center justify-between text-xs pt-3 border-t border-white/5">
-              <span className="font-bold text-white">Marc D.</span>
-              <span className="text-slate-500 text-[10px]">Netflix 4K • Hier</span>
+            <div className={`flex items-center justify-between text-xs pt-3 border-t ${
+              isDark ? "border-slate-800" : "border-slate-100"
+            }`}>
+              <span className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>Marc D.</span>
+              <span className="text-slate-400 text-[10px]">Netflix 4K • Hier</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0d0d12] border border-white/5 relative">
+          <div className={`p-5 rounded-2xl border relative transition-colors ${
+            isDark ? "bg-[#0d1222] border-slate-800" : "bg-white border-slate-200 shadow-xs"
+          }`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1 text-amber-400">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-amber-400" />
                 ))}
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+              <span className="text-[10px] text-emerald-500 font-mono flex items-center gap-1 font-semibold">
                 <CheckCircle className="w-3 h-3" /> Achat Vérifié
               </span>
             </div>
-            <p className="text-xs text-slate-300 italic mb-4 leading-relaxed">
+            <p className={`text-xs italic mb-4 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               "Clé Windows 11 Pro activée instantanément sur le site officiel Microsoft. Prix imbattable et support WhatsApp très aimable."
             </p>
-            <div className="flex items-center justify-between text-xs pt-3 border-t border-white/5">
-              <span className="font-bold text-white">Sami K.</span>
-              <span className="text-slate-500 text-[10px]">Windows 11 Pro • Il y a 2 jours</span>
+            <div className={`flex items-center justify-between text-xs pt-3 border-t ${
+              isDark ? "border-slate-800" : "border-slate-100"
+            }`}>
+              <span className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>Sami K.</span>
+              <span className="text-slate-400 text-[10px]">Windows 11 Pro • Il y a 2 jours</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0d0d12] border border-white/5 relative">
+          <div className={`p-5 rounded-2xl border relative transition-colors ${
+            isDark ? "bg-[#0d1222] border-slate-800" : "bg-white border-slate-200 shadow-xs"
+          }`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1 text-amber-400">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-amber-400" />
                 ))}
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+              <span className="text-[10px] text-emerald-500 font-mono flex items-center gap-1 font-semibold">
                 <CheckCircle className="w-3 h-3" /> Achat Vérifié
               </span>
             </div>
-            <p className="text-xs text-slate-300 italic mb-4 leading-relaxed">
+            <p className={`text-xs italic mb-4 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               "Boost de 1000 abonnés TikTok livré progressivement dans la soirée. Mon profil est maintenant crédible pour mes lives !"
             </p>
-            <div className="flex items-center justify-between text-xs pt-3 border-t border-white/5">
-              <span className="font-bold text-white">Élodie B.</span>
-              <span className="text-slate-500 text-[10px]">Boost TikTok • Il y a 3 jours</span>
+            <div className={`flex items-center justify-between text-xs pt-3 border-t ${
+              isDark ? "border-slate-800" : "border-slate-100"
+            }`}>
+              <span className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>Élodie B.</span>
+              <span className="text-slate-400 text-[10px]">Boost TikTok • Il y a 3 jours</span>
             </div>
           </div>
         </div>
@@ -830,8 +939,12 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       {/* FAQ ACCORDION SECTION */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto z-10 relative">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-white font-display mb-2">Foire Aux Questions (FAQ)</h2>
-          <p className="text-xs text-slate-400">Tout ce qu'il faut savoir avant de commander</p>
+          <h2 className={`text-2xl font-bold font-display mb-2 ${isDark ? "text-white" : "text-slate-900"}`}>
+            Foire Aux Questions (FAQ)
+          </h2>
+          <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            Tout ce qu'il faut savoir avant de commander
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -855,20 +968,26 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           ].map((faq, idx) => (
             <div 
               key={idx}
-              className="rounded-xl bg-[#0d0d12] border border-white/5 overflow-hidden transition-colors"
+              className={`rounded-xl border overflow-hidden transition-colors ${
+                isDark ? "bg-[#0d1222] border-slate-800" : "bg-white border-slate-200 shadow-xs"
+              }`}
             >
               <button
                 onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                className="w-full p-4 text-left font-semibold text-sm text-white flex items-center justify-between hover:text-purple-300 transition-colors"
+                className={`w-full p-4 text-left font-semibold text-sm flex items-center justify-between transition-colors cursor-pointer ${
+                  isDark ? "text-white hover:text-amber-400" : "text-slate-900 hover:text-amber-600"
+                }`}
               >
                 <span className="flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-purple-400 shrink-0" />
+                  <HelpCircle className="w-4 h-4 text-amber-500 shrink-0" />
                   {faq.q}
                 </span>
-                <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === idx ? "rotate-90 text-purple-400" : ""}`} />
+                <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === idx ? "rotate-90 text-amber-500" : ""}`} />
               </button>
               {openFaq === idx && (
-                <div className="px-4 pb-4 pt-1 text-xs text-slate-400 leading-relaxed border-t border-white/5 bg-white/[0.01]">
+                <div className={`px-4 pb-4 pt-1 text-xs leading-relaxed border-t ${
+                  isDark ? "text-slate-400 border-slate-800" : "text-slate-600 border-slate-100"
+                }`}>
                   {faq.a}
                 </div>
               )}
@@ -880,24 +999,32 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       {/* SHOPPING CART DRAWER / MODAL */}
       <AnimatePresence>
         {isCartOpen && (
-          <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-xs">
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="w-full max-w-md bg-[#0d0d12] border-l border-white/10 h-full flex flex-col justify-between shadow-2xl relative z-10"
+              className={`w-full max-w-md h-full flex flex-col justify-between shadow-2xl relative z-10 border-l ${
+                isDark ? "bg-[#0d1222] border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+              }`}
             >
               
               {/* Header */}
-              <div className="p-5 border-b border-white/10 flex items-center justify-between bg-[#09090b]">
+              <div className={`p-5 border-b flex items-center justify-between ${
+                isDark ? "bg-[#0a0d16] border-slate-800" : "bg-slate-50 border-slate-200"
+              }`}>
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-5 h-5 text-purple-400" />
-                  <h3 className="font-bold text-white text-base">Votre Panier ({cartCount})</h3>
+                  <ShoppingBag className="w-5 h-5 text-amber-500" />
+                  <h3 className={`font-bold text-base ${isDark ? "text-white" : "text-slate-900"}`}>
+                    Votre Panier ({cartCount})
+                  </h3>
                 </div>
                 <button
                   onClick={() => setIsCartOpen(false)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                    isDark ? "hover:bg-slate-800 text-slate-400 hover:text-white" : "hover:bg-slate-200 text-slate-500 hover:text-slate-900"
+                  }`}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -910,11 +1037,11 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                   <>
                     {cart.length === 0 ? (
                       <div className="py-20 text-center">
-                        <ShoppingBag className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                        <p className="text-slate-400 text-sm">Votre panier est actuellement vide.</p>
+                        <ShoppingBag className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                        <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>Votre panier est actuellement vide.</p>
                         <button
                           onClick={() => setIsCartOpen(false)}
-                          className="mt-4 px-4 py-2 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-semibold hover:bg-purple-600/30 transition-all"
+                          className="mt-4 px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-all cursor-pointer shadow-sm"
                         >
                           Découvrir les produits
                         </button>
@@ -924,16 +1051,22 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                         {cart.map((item) => (
                           <div
                             key={item.product.id}
-                            className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between gap-3"
+                            className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
+                              isDark ? "bg-slate-900/60 border-slate-800" : "bg-slate-50 border-slate-200"
+                            }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                              <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+                                isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+                              }`}>
                                 {renderIcon(item.product.iconName)}
                               </div>
                               <div className="min-w-0">
-                                <h4 className="text-xs font-bold text-white truncate">{item.product.title}</h4>
-                                <p className="text-[10px] text-cyan-400 font-mono">{item.product.durationOrType}</p>
-                                <p className="text-xs font-bold text-purple-300 mt-0.5">
+                                <h4 className={`text-xs font-bold truncate ${isDark ? "text-white" : "text-slate-900"}`}>
+                                  {item.product.title}
+                                </h4>
+                                <p className="text-[10px] text-amber-500 font-mono font-medium">{item.product.durationOrType}</p>
+                                <p className={`text-xs font-bold mt-0.5 ${isDark ? "text-amber-400" : "text-amber-600"}`}>
                                   {formatPriceValue(
                                     getProductPriceForRegion(item.product, selectedCountry.region) * item.quantity,
                                     selectedCountry.currencySymbol,
@@ -944,24 +1077,32 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                             </div>
 
                             <div className="flex items-center gap-2">
-                              <div className="flex items-center border border-slate-800 rounded-lg bg-slate-900">
+                              <div className={`flex items-center border rounded-lg ${
+                                isDark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"
+                              }`}>
                                 <button
                                   onClick={() => updateQuantity(item.product.id, -1)}
-                                  className="p-1 hover:bg-white/10 text-slate-400 rounded-l-lg"
+                                  className={`p-1 rounded-l-lg cursor-pointer ${
+                                    isDark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-600"
+                                  }`}
                                 >
                                   <Minus className="w-3 h-3" />
                                 </button>
-                                <span className="px-2 text-xs font-mono text-white font-bold">{item.quantity}</span>
+                                <span className={`px-2 text-xs font-mono font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+                                  {item.quantity}
+                                </span>
                                 <button
                                   onClick={() => updateQuantity(item.product.id, 1)}
-                                  className="p-1 hover:bg-white/10 text-slate-400 rounded-r-lg"
+                                  className={`p-1 rounded-r-lg cursor-pointer ${
+                                    isDark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-600"
+                                  }`}
                                 >
                                   <Plus className="w-3 h-3" />
                                 </button>
                               </div>
                               <button
                                 onClick={() => removeFromCart(item.product.id)}
-                                className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+                                className="p-1.5 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -975,62 +1116,82 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
                 {checkoutStep === "form" && (
                   <form onSubmit={handleCheckoutSubmit} className="space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                      <span className="text-xs font-semibold text-slate-400">Coordonnées de livraison</span>
+                    <div className={`flex items-center justify-between pb-2 border-b ${
+                      isDark ? "border-slate-800" : "border-slate-200"
+                    }`}>
+                      <span className={`text-xs font-semibold ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                        Coordonnées de livraison
+                      </span>
                       <button
                         type="button"
                         onClick={() => setCheckoutStep("cart")}
-                        className="text-xs text-purple-400 hover:underline"
+                        className="text-xs text-amber-500 hover:underline cursor-pointer"
                       >
                         ← Retour au panier
                       </button>
                     </div>
 
                     {orderError && (
-                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
                         {orderError}
                       </div>
                     )}
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Nom complet *</label>
+                      <label className={`block text-xs font-semibold mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                        Nom complet *
+                      </label>
                       <input
                         type="text"
                         required
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
                         placeholder="Ex: Jean Dupont"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${
+                          isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+                        }`}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">E-mail de livraison *</label>
+                      <label className={`block text-xs font-semibold mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                        E-mail de livraison *
+                      </label>
                       <input
                         type="email"
                         required
                         value={customerEmail}
                         onChange={(e) => setCustomerEmail(e.target.value)}
                         placeholder="votre-email@domaine.com"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${
+                          isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+                        }`}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Numéro WhatsApp (avec indicatif) *</label>
+                      <label className={`block text-xs font-semibold mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                        Numéro WhatsApp (avec indicatif) *
+                      </label>
                       <input
                         type="tel"
                         required
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
                         placeholder="+33 6 12 34 56 78"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${
+                          isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+                        }`}
                       />
-                      <p className="text-[10px] text-slate-500 mt-1">Utilisé pour l'envoi direct de vos accès par message.</p>
+                      <p className={`text-[10px] mt-1 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                        Utilisé pour l'envoi direct de vos accès par message.
+                      </p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-2">Moyen de paiement</label>
+                      <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                        Moyen de paiement
+                      </label>
                       <div className="grid grid-cols-2 gap-2">
                         {[
                           { id: "card", label: "Carte Bancaire", icon: CreditCard },
@@ -1039,18 +1200,21 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                           { id: "mobile_money", label: "Mobile Money", icon: Smartphone }
                         ].map((pm) => {
                           const IconComp = pm.icon;
+                          const isSelected = paymentMethod === pm.id;
                           return (
                             <button
                               key={pm.id}
                               type="button"
                               onClick={() => setPaymentMethod(pm.id as any)}
-                              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                                paymentMethod === pm.id
-                                  ? "bg-purple-500/20 border-purple-500 text-white"
-                                  : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                              className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-amber-500/15 border-amber-500 text-amber-500 font-bold"
+                                  : isDark 
+                                    ? "bg-slate-900 border-slate-800 text-slate-400 hover:text-white" 
+                                    : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900"
                               }`}
                             >
-                              <IconComp className="w-4 h-4 text-purple-400 shrink-0" />
+                              <IconComp className="w-4 h-4 text-amber-500 shrink-0" />
                               <span className="text-[11px] font-semibold">{pm.label}</span>
                             </button>
                           );
@@ -1062,20 +1226,30 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
                 {checkoutStep === "success" && completedOrder && (
                   <div className="py-8 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto animate-bounce">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 mx-auto">
                       <CheckCircle className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold text-white font-display">Commande Validée !</h3>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      Merci <span className="font-semibold text-purple-300">{completedOrder.customerName}</span> ! <br />
-                      Votre commande <span className="font-mono text-cyan-400">#{completedOrder.id.slice(0, 8)}</span> a été traitée.
+                    <h3 className={`text-xl font-bold font-display ${isDark ? "text-white" : "text-slate-900"}`}>
+                      Commande Validée !
+                    </h3>
+                    <p className={`text-xs leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                      Merci <span className="font-semibold text-amber-500">{completedOrder.customerName}</span> ! <br />
+                      Votre commande <span className="font-mono text-amber-500 font-semibold">#{completedOrder.id.slice(0, 8)}</span> a été traitée.
                     </p>
-                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 text-left text-xs space-y-2">
-                      <p className="text-slate-400">📩 <strong className="text-white">Email:</strong> {completedOrder.customerEmail}</p>
-                      <p className="text-slate-400">📱 <strong className="text-white">WhatsApp:</strong> {completedOrder.customerPhone}</p>
-                      <p className="text-slate-400">💳 <strong className="text-white">Total réglé:</strong> {formatPriceValue(completedOrder.totalAmount, completedOrder.currencySymbol || selectedCountry.currencySymbol, completedOrder.currency || selectedCountry.currency)}</p>
+                    <div className={`p-4 rounded-xl border text-left text-xs space-y-2 ${
+                      isDark ? "bg-slate-900/60 border-slate-800" : "bg-slate-50 border-slate-200"
+                    }`}>
+                      <p className={isDark ? "text-slate-400" : "text-slate-600"}>
+                        📩 <strong className={isDark ? "text-white" : "text-slate-900"}>Email:</strong> {completedOrder.customerEmail}
+                      </p>
+                      <p className={isDark ? "text-slate-400" : "text-slate-600"}>
+                        📱 <strong className={isDark ? "text-white" : "text-slate-900"}>WhatsApp:</strong> {completedOrder.customerPhone}
+                      </p>
+                      <p className={isDark ? "text-slate-400" : "text-slate-600"}>
+                        💳 <strong className={isDark ? "text-white" : "text-slate-900"}>Total réglé:</strong> {formatPriceValue(completedOrder.totalAmount, completedOrder.currencySymbol || selectedCountry.currencySymbol, completedOrder.currency || selectedCountry.currency)}
+                      </p>
                     </div>
-                    <p className="text-[11px] text-amber-400 font-mono">
+                    <p className="text-[11px] text-amber-500 font-mono font-medium">
                       Vos identifiants et accès vous sont transmis par WhatsApp sous quelques minutes.
                     </p>
                     <button
@@ -1083,7 +1257,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                         setCheckoutStep("cart");
                         setIsCartOpen(false);
                       }}
-                      className="w-full py-3 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 transition-all shadow-lg shadow-purple-500/20"
+                      className="w-full py-3 rounded-xl bg-amber-500 text-white font-bold text-xs hover:bg-amber-600 transition-all shadow-md cursor-pointer"
                     >
                       Retour à la boutique
                     </button>
@@ -1094,10 +1268,12 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
 
               {/* Drawer Footer Total & Proceed */}
               {cart.length > 0 && checkoutStep !== "success" && (
-                <div className="p-5 border-t border-white/10 bg-[#09090b] space-y-3">
+                <div className={`p-5 border-t space-y-3 ${
+                  isDark ? "bg-[#0a0d16] border-slate-800" : "bg-slate-50 border-slate-200"
+                }`}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Total à payer</span>
-                    <span className="text-xl font-black text-white font-display">
+                    <span className={isDark ? "text-slate-400" : "text-slate-600"}>Total à payer</span>
+                    <span className={`text-xl font-black font-display ${isDark ? "text-white" : "text-slate-900"}`}>
                       {formatPriceValue(cartTotal, selectedCountry.currencySymbol, selectedCountry.currency)}
                     </span>
                   </div>
@@ -1105,7 +1281,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                   {checkoutStep === "cart" ? (
                     <button
                       onClick={() => setCheckoutStep("form")}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-cyan-400 text-white font-bold text-xs shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 hover:opacity-95 transition-all cursor-pointer"
+                      className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       Passer la commande ({formatPriceValue(cartTotal, selectedCountry.currencySymbol, selectedCountry.currency)})
                       <ArrowRight className="w-4 h-4" />
@@ -1114,7 +1290,7 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                     <button
                       onClick={handleCheckoutSubmit}
                       disabled={isSubmitting}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1137,26 +1313,34 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
       {/* COUNTRY & CURRENCY SELECTION MODAL */}
       <AnimatePresence>
         {isCountryModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-lg bg-[#0d0d12] border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden"
+              className={`w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden border ${
+                isDark ? "bg-[#0d1222] border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+              }`}
             >
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+              <div className={`flex items-center justify-between pb-4 border-b mb-4 ${
+                isDark ? "border-slate-800" : "border-slate-200"
+              }`}>
                 <div className="flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-cyan-400" />
+                  <Globe className="w-5 h-5 text-amber-500" />
                   <div>
-                    <h3 className="font-bold text-white text-base font-display">Pays & Devise de la Boutique</h3>
-                    <p className="text-[11px] text-slate-400">
-                      Détection automatique : <span className="text-cyan-300 font-semibold">{selectedCountry.flag} {selectedCountry.name} ({selectedCountry.symbol})</span>
+                    <h3 className={`font-bold text-base font-display ${isDark ? "text-white" : "text-slate-900"}`}>
+                      Pays & Devise de la Boutique
+                    </h3>
+                    <p className={`text-[11px] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                      Détection automatique : <span className="text-amber-500 font-semibold">{selectedCountry.flag} {selectedCountry.name} ({selectedCountry.symbol})</span>
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsCountryModalOpen(false)}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white"
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    isDark ? "hover:bg-slate-800 text-slate-400 hover:text-white" : "hover:bg-slate-100 text-slate-500 hover:text-slate-900"
+                  }`}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1170,7 +1354,9 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
                   placeholder="Rechercher un pays (France, USA, Côte d'Ivoire, Sénégal...)..."
                   value={countrySearchQuery}
                   onChange={(e) => setCountrySearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-cyan-500"
+                  className={`w-full pl-9 pr-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-amber-500 ${
+                    isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
+                  }`}
                 />
               </div>
 
@@ -1178,43 +1364,58 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
               <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
                 {COUNTRIES
                   .filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.currency.toLowerCase().includes(countrySearchQuery.toLowerCase()))
-                  .map(country => (
-                    <button
-                      key={country.code}
-                      onClick={() => {
-                        setSelectedCountry(country);
-                        localStorage.setItem("user_selected_country", country.code);
-                        setIsCountryModalOpen(false);
-                        addToast(
-                          "Pays mis à jour !",
-                          `Boutique adaptée pour ${country.flag} ${country.name} (${country.symbol})`,
-                          "info"
-                        );
-                      }}
-                      className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                        selectedCountry.code === country.code
-                          ? "bg-purple-600/20 border-purple-500 text-white font-bold"
-                          : "bg-white/[0.02] border-white/5 hover:border-white/20 text-slate-300 hover:text-white"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{country.flag}</span>
-                        <div>
-                          <p className="text-xs font-semibold">{country.name}</p>
-                          <p className="text-[10px] text-slate-500 font-mono">Région : {country.region.toUpperCase()}</p>
+                  .map(country => {
+                    const isSelected = selectedCountry.code === country.code;
+                    return (
+                      <button
+                        key={country.code}
+                        onClick={() => {
+                          setSelectedCountry(country);
+                          localStorage.setItem("user_selected_country", country.code);
+                          setIsCountryModalOpen(false);
+                          addToast(
+                            "Pays mis à jour !",
+                            `Boutique adaptée pour ${country.flag} ${country.name} (${country.symbol})`,
+                            "info"
+                          );
+                        }}
+                        className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-amber-500/15 border-amber-500 text-amber-500 font-bold"
+                            : isDark
+                              ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white"
+                              : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{country.flag}</span>
+                          <div>
+                            <p className="text-xs font-semibold">{country.name}</p>
+                            <p className={`text-[10px] font-mono ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                              Région : {country.region.toUpperCase()}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                        {country.currency} ({country.symbol})
-                      </span>
-                    </button>
-                  ))}
+                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                          isSelected 
+                            ? "text-amber-500 bg-amber-500/10 border-amber-500/30"
+                            : isDark
+                              ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
+                              : "text-amber-600 bg-amber-50 border-amber-200"
+                        }`}>
+                          {country.currency} ({country.symbol})
+                        </span>
+                      </button>
+                    );
+                  })}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-white/10 text-center">
+              <div className={`mt-4 pt-3 border-t text-center ${isDark ? "border-slate-800" : "border-slate-200"}`}>
                 <button
                   onClick={() => setIsCountryModalOpen(false)}
-                  className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl hover:text-white transition-all cursor-pointer"
+                  className={`px-4 py-2 border text-xs rounded-xl transition-all cursor-pointer ${
+                    isDark ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white" : "bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900"
+                  }`}
                 >
                   Fermer
                 </button>
@@ -1223,7 +1424,6 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
           </div>
         )}
       </AnimatePresence>
-
 
       {/* SEO SECTION FOR SEARCH ENGINE INDEXING & HIGH KEYWORD DENSITY */}
       <SEOContentSection />
@@ -1238,22 +1438,32 @@ export default function DigitalStore({ onNavigateToIPTV, onNavigateToAdmin }: Di
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="pointer-events-auto bg-[#0d0d12]/95 border border-purple-500/40 backdrop-blur-xl p-4 rounded-2xl shadow-2xl shadow-purple-950/60 flex items-start justify-between gap-3 text-white"
+              className={`pointer-events-auto p-4 rounded-2xl shadow-xl flex items-start justify-between gap-3 border ${
+                isDark 
+                  ? "bg-[#0d1222]/95 border-amber-500/40 text-white backdrop-blur-xl" 
+                  : "bg-white border-amber-400 text-slate-900 shadow-amber-500/5 backdrop-blur-xl"
+              }`}
             >
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 shrink-0 mt-0.5 shadow-xs">
                   <CheckCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white font-display">{toast.title}</h4>
+                  <h4 className={`text-xs font-bold font-display ${isDark ? "text-white" : "text-slate-900"}`}>
+                    {toast.title}
+                  </h4>
                   {toast.description && (
-                    <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">{toast.description}</p>
+                    <p className={`text-[11px] mt-0.5 leading-snug ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                      {toast.description}
+                    </p>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                className={`p-1 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                  isDark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+                }`}
               >
                 <X className="w-3.5 h-3.5" />
               </button>

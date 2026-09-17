@@ -192,10 +192,10 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
         <div className="order-1 lg:order-2 lg:col-start-8 lg:col-span-5 lg:row-start-1 lg:row-end-3 w-full max-w-md mx-auto">
           
           <div
-            className={`relative rounded-2xl p-6 sm:p-8 shadow-2xl overflow-hidden border transition-colors ${
+            className={`relative rounded-2xl p-6 sm:p-8 shadow-xl overflow-hidden border transition-colors ${
               theme === "dark"
                 ? "bg-[#0d121f] border-slate-800 shadow-amber-950/20"
-                : "bg-white border-amber-200 shadow-amber-900/10 text-slate-900"
+                : "bg-white border-slate-200/90 shadow-slate-200/70 text-slate-900"
             }`}
             id="login-card"
           >
@@ -206,7 +206,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
               <div className={`inline-flex items-center justify-center p-3 rounded-2xl mb-4 shadow-inner ${
                 theme === "dark"
                   ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
-                  : "bg-amber-100 border border-amber-200 text-amber-800"
+                  : "bg-amber-50 border border-amber-200 text-amber-700"
               }`}>
                 <Tv2 className="w-8 h-8 text-amber-500" />
               </div>
@@ -222,10 +222,10 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-500 text-sm"
+                className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-600 text-sm"
                 id="login-error-alert"
               >
-                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
                 <div>
                   <span className="font-semibold block mb-0.5">Erreur</span>
                   {error}
@@ -235,13 +235,15 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
             {/* SKELETON LOADER FOR REMEMBERED SESSION CHECK */}
             {isCheckingStoredSession ? (
-              <div className="mb-5 p-4 rounded-xl border border-amber-500/20 bg-amber-950/10 space-y-3 animate-pulse">
+              <div className={`mb-5 p-4 rounded-xl border space-y-3 animate-pulse ${
+                theme === "dark" ? "border-amber-500/20 bg-amber-950/10" : "border-slate-200 bg-slate-50"
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                    <div className="h-3.5 w-28 bg-slate-700/80 rounded" />
+                    <div className={`w-2.5 h-2.5 rounded-full ${theme === "dark" ? "bg-slate-700" : "bg-slate-300"}`} />
+                    <div className={`h-3.5 w-28 rounded ${theme === "dark" ? "bg-slate-700/80" : "bg-slate-300"}`} />
                   </div>
-                  <div className="h-3.5 w-16 bg-slate-700/80 rounded" />
+                  <div className={`h-3.5 w-16 rounded ${theme === "dark" ? "bg-slate-700/80" : "bg-slate-300"}`} />
                 </div>
                 <div className="h-9 w-full bg-amber-500/20 rounded-xl" />
               </div>
@@ -252,7 +254,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                 className={`mb-5 p-4 rounded-xl border text-xs space-y-3 ${
                   theme === "dark"
                     ? "bg-amber-950/20 border-amber-500/20 text-slate-300"
-                    : "bg-amber-50 border-amber-200 text-slate-800"
+                    : "bg-amber-50/70 border-amber-200/90 text-slate-800"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -260,7 +262,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="font-bold font-mono">{rememberedUser.username}</span>
                   </div>
-                  <span className="text-[10px] text-amber-500 font-semibold uppercase tracking-wider">
+                  <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">
                     {rememberedUser.expiresAt > Date.now() ? "Mémorisé" : "Expiré"}
                   </span>
                 </div>
@@ -282,14 +284,18 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
               <motion.div 
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-4 rounded-xl bg-slate-950/90 border border-amber-500/30 space-y-3 mb-5 shadow-lg"
+                className={`p-4 rounded-xl border space-y-3 mb-5 shadow-lg ${
+                  theme === "dark" 
+                    ? "bg-slate-950/90 border-amber-500/30" 
+                    : "bg-slate-50 border-amber-400/50 text-slate-900"
+                }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-400 flex items-center gap-2">
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                  <span className={`text-xs font-bold flex items-center gap-2 ${theme === "dark" ? "text-amber-400" : "text-amber-800"}`}>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-500" />
                     Vérification de l'abonnement IPTV...
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  <span className="text-[10px] font-mono font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                     Serveur Sécurisé
                   </span>
                 </div>
@@ -297,21 +303,23 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                 {/* Animated Skeleton Info Lines */}
                 <div className="space-y-2 pt-1">
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-slate-400">Authentification:</span>
+                    <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Authentification:</span>
                     <div className="h-3 w-20 bg-amber-500/20 rounded animate-pulse" />
                   </div>
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-slate-400">Contrôle d'Expiration:</span>
-                    <div className="h-3 w-28 bg-slate-800 rounded animate-pulse" />
+                    <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Contrôle d'Expiration:</span>
+                    <div className={`h-3 w-28 rounded animate-pulse ${theme === "dark" ? "bg-slate-800" : "bg-slate-200"}`} />
                   </div>
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-slate-400">Attribution Flux HLS:</span>
+                    <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Attribution Flux HLS:</span>
                     <div className="h-3 w-24 bg-purple-500/20 rounded animate-pulse" />
                   </div>
                 </div>
 
                 {/* Shimmer progress bar */}
-                <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden mt-2 border border-slate-800">
+                <div className={`w-full rounded-full h-1.5 overflow-hidden mt-2 border ${
+                  theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-slate-200 border-slate-300"
+                }`}>
                   <div className="bg-gradient-to-r from-amber-500 via-fuchsia-500 to-cyan-400 h-full w-full animate-pulse" />
                 </div>
               </motion.div>
@@ -319,11 +327,11 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
             <form onSubmit={(e) => handleSubmit(e)} className="space-y-5">
               <div>
-                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>
                   {t("username_label")}
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
                     <User className="w-5 h-5" />
                   </div>
                   <input
@@ -333,7 +341,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                     className={`w-full pl-11 pr-4 py-3 rounded-xl border transition-all text-sm font-mono ${
                       theme === "dark"
                         ? "bg-[#090d16] border-slate-800 text-white placeholder-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:ring-1 focus:ring-amber-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                     }`}
                     placeholder={t("username_placeholder")}
                     required
@@ -345,12 +353,12 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className={`block text-xs font-semibold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                  <label className={`block text-xs font-semibold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>
                     {t("password_label")}
                   </label>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
                     <Lock className="w-5 h-5" />
                   </div>
                   <input
@@ -360,7 +368,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                     className={`w-full pl-11 pr-4 py-3 rounded-xl border transition-all text-sm font-mono ${
                       theme === "dark"
                         ? "bg-[#090d16] border-slate-800 text-white placeholder-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:ring-1 focus:ring-amber-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                     }`}
                     placeholder="••••••••••••"
                     required
@@ -372,12 +380,12 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
               {/* Remember Me Checkbox */}
               <div className="flex items-center justify-between py-1">
-                <label className={`flex items-center gap-2 cursor-pointer select-none text-xs ${theme === "dark" ? "text-slate-400 hover:text-slate-200" : "text-slate-600 hover:text-slate-900"}`}>
+                <label className={`flex items-center gap-2 cursor-pointer select-none text-xs ${theme === "dark" ? "text-slate-400 hover:text-slate-200" : "text-slate-700 hover:text-slate-900"}`}>
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-400 bg-slate-900 text-amber-500 focus:ring-amber-500/50 w-4 h-4 cursor-pointer"
+                    className="rounded border-slate-300 bg-white text-amber-500 focus:ring-amber-500/50 w-4 h-4 cursor-pointer"
                     id="login-remember-me-checkbox"
                   />
                   <span>{t("remember_me")}</span>
@@ -419,23 +427,25 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
         <div className="order-2 lg:order-1 lg:col-start-1 lg:col-span-7 lg:row-start-1">
           
           <div 
-            className={`relative rounded-2xl border p-6 shadow-xl overflow-hidden group ${
+            className={`relative rounded-2xl border p-6 shadow-xl overflow-hidden group transition-colors ${
               theme === "dark"
                 ? "bg-gradient-to-r from-amber-950/30 via-slate-900 to-slate-900 border-amber-500/30"
-                : "bg-gradient-to-r from-amber-100 via-amber-50 to-white border-amber-300 shadow-amber-100"
+                : "bg-gradient-to-r from-amber-50 via-white to-amber-50/50 border-amber-200/90 shadow-slate-200/60"
             }`}
           >
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-amber-500 via-violet-500 to-amber-400" />
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
               <div className="space-y-1">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                  theme === "dark" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-amber-100 text-amber-800 border border-amber-300"
+                }`}>
                   🛒 {t("marketplace_banner_title")}
                 </span>
                 <h3 className={`text-lg font-bold mt-1 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
                   {t("marketplace_banner_title")}
                 </h3>
-                <p className={`text-xs ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
+                <p className={`text-xs leading-relaxed ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
                   {t("marketplace_banner_desc")}
                 </p>
               </div>
@@ -463,7 +473,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
         <div className="order-3 lg:order-1 lg:col-start-1 lg:col-span-7 lg:row-start-2">
           
           <div
-            className={`rounded-2xl border p-6 space-y-6 ${
+            className={`rounded-2xl border p-6 space-y-6 transition-colors ${
               theme === "dark"
                 ? "bg-[#0e1320] border-slate-800"
                 : "bg-white border-slate-200 shadow-sm"
@@ -479,7 +489,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
               </p>
             </div>
 
-            {/* TV Channels & VOD preview cards (Vector gradient based - 0ms download time) */}
+            {/* TV Channels & VOD preview cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
               {/* Card 1: Live Sports */}
@@ -494,13 +504,17 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white text-[9px] font-extrabold uppercase tracking-widest shadow-md">
                     ⚽ LIVE SPORT
                   </span>
-                  <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+                  <div className={`p-1.5 rounded-lg ${theme === "dark" ? "bg-rose-500/10 text-rose-400" : "bg-rose-100 text-rose-600"}`}>
                     <Tv2 className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-bold text-white">Canal+, beIN Sports, DAZN, RMC</h4>
-                  <p className="text-[10px] text-slate-300">Ligue des Champions, Premier League, F1, UFC.</p>
+                  <h4 className={`text-xs font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                    Canal+, beIN Sports, DAZN, RMC
+                  </h4>
+                  <p className={`text-[10px] ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
+                    Ligue des Champions, Premier League, F1, UFC.
+                  </p>
                 </div>
               </div>
 
@@ -516,13 +530,17 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 text-slate-950 text-[9px] font-extrabold uppercase tracking-widest shadow-md">
                     🎬 CINÉMA & VOD
                   </span>
-                  <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                  <div className={`p-1.5 rounded-lg ${theme === "dark" ? "bg-amber-500/10 text-amber-400" : "bg-amber-100 text-amber-700"}`}>
                     <Sparkles className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-bold text-white">Netflix, Disney+, Prime, Canal+</h4>
-                  <p className="text-[10px] text-slate-300">Derniers blockbusters et séries exclusives.</p>
+                  <h4 className={`text-xs font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                    Netflix, Disney+, Prime, Canal+
+                  </h4>
+                  <p className={`text-[10px] ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}>
+                    Derniers blockbusters et séries exclusives.
+                  </p>
                 </div>
               </div>
 
@@ -530,7 +548,7 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
 
             {/* Channels Showcase */}
             <div className="space-y-2.5">
-              <span className={`text-[10px] font-bold uppercase tracking-wider block ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-wider block ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
                 Bouquets premium inclus & compatibles
               </span>
               <div className="flex flex-wrap gap-2">
@@ -560,24 +578,23 @@ export default function IPTVLogin({ onNavigateToAdmin, onNavigateToStore, onPlay
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>4K UHD</span>
                 </div>
-                <p className={`text-[9px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>{t("feature_quality")}</p>
+                <p className={`text-[9px] font-medium ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>{t("feature_quality")}</p>
               </div>
               <div className={`text-center space-y-1 border-x ${theme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
                 <div className="text-emerald-500 text-sm font-bold flex items-center justify-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                   <span>99.9%</span>
                 </div>
-                <p className={`text-[9px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>{t("feature_stable")}</p>
+                <p className={`text-[9px] font-medium ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>{t("feature_stable")}</p>
               </div>
               <div className="text-center space-y-1">
                 <div className="text-amber-500 text-sm font-bold flex items-center justify-center gap-1">
                   <Compass className="w-3.5 h-3.5 text-amber-500" />
                   <span>Multi-D.</span>
                 </div>
-                <p className={`text-[9px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>{t("feature_secure")}</p>
+                <p className={`text-[9px] font-medium ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>{t("feature_secure")}</p>
               </div>
             </div>
-
           </div>
 
         </div>

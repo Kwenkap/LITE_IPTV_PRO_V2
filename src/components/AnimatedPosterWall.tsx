@@ -30,7 +30,7 @@ export default function AnimatedPosterWall() {
         <div className={`absolute inset-0 bg-gradient-to-tr ${
           theme === "dark" 
             ? "from-[#0a0d16] via-[#0d1222] to-[#141b2d]" 
-            : "from-[#fbfaf6] via-[#f4f0e6] to-[#eae3d2]"
+            : "from-slate-50 via-slate-100 to-slate-200/50"
         }`} />
       </div>
     );
@@ -63,7 +63,7 @@ export default function AnimatedPosterWall() {
       `}</style>
 
       {/* Tilted Poster Grid */}
-      <div className={`absolute inset-0 w-full h-full origin-center rotate-[4deg] scale-[1.08] ${theme === "dark" ? "opacity-20" : "opacity-10"}`}>
+      <div className={`absolute inset-0 w-full h-full origin-center rotate-[4deg] scale-[1.08] ${theme === "dark" ? "opacity-20" : "opacity-[0.06]"}`}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full h-full max-w-7xl mx-auto px-4 overflow-hidden">
           
           {/* Column 1 */}
@@ -105,11 +105,11 @@ export default function AnimatedPosterWall() {
         </div>
       </div>
 
-      {/* Lightweight Gradient Overlay (No heavy backdrop-blur) */}
+      {/* Lightweight Gradient Overlay */}
       <div className={`absolute inset-0 ${
         theme === "dark"
           ? "bg-gradient-to-b from-[#0a0d16] via-[#0a0d16]/95 to-[#0a0d16]"
-          : "bg-gradient-to-b from-[#fbfaf6] via-[#fbfaf6]/95 to-[#fbfaf6]"
+          : "bg-gradient-to-b from-slate-50 via-slate-50/95 to-slate-50"
       } z-[1]`} />
     </div>
   );
